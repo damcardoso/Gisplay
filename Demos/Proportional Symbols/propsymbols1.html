@@ -1,0 +1,96 @@
+<html>
+	<head>
+		<!--script type="text/javascript" src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.18.0/mapbox-gl.js"></script-->
+		<script src='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js'></script>
+		<link href='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css' rel='stylesheet' />
+		<link href='..\..\gisplay.css' rel='stylesheet' />
+
+	<style>
+		#map {
+			float: left;
+			width: 95%;
+			height: 95%;
+			position: absolute;
+		}
+
+		
+
+
+	</style>
+	</head>	
+	<body>
+		<input type="file" id="file" name="files">
+		<button id="submit" onclick="start();">Ok</button>
+		<div id="map"></div>
+		<script type="text/javascript" src="..\..\lib\kdtree.js"></script>
+		<script type="text/javascript" src="..\..\lib\rtree.js"></script>
+		<script type="text/javascript" src="..\..\lib\chroma.min.js"></script>
+		<script type="text/javascript" src="..\..\lib\earcut.js"></script>
+		<script type="text/javascript" src="..\..\gisplayv0.js"></script>
+		<script>
+	
+	L.mapbox.accessToken = 'pk.eyJ1IjoibG9sYXNkIiwiYSI6ImNpbmxsZDJkejAwOHR2Zm0yZHVwOWV1ejEifQ.SJ6CupBlW0gPic0n-HgY6w';
+	var map = L.mapbox.map('map', 'mapbox.streets').setView([49.36855556, -81.66371667], 4);
+
+	var options = {
+		//colorScheme: ["red", "blue"]
+		numberOfClasses: 2,
+		classBreaksMethod: "equidistant",
+		//,classBreaks: [0,20,50,80]
+		//,
+		maxPointSize: 100
+		,minPointSize: 5
+		,sizeByClass: false
+		,attr: 'f1'
+		//,interactive: true
+		//,showPropertiesOnClick: ['f1', "State", 'f2', 'County'] //choropleth file
+		//,showPropertiesOnClick: ['f1', "Alcohol", 'f2', 'Victims'] //dot map file
+		//,maxFeatures: 5000
+	};
+	
+
+	function start(){
+		//var data = new Array();
+		var time = Date.now();
+		
+		console.log("starting...");
+		
+		var reader = new FileReader();
+		reader.onloadend = function(){
+			//new Choropleth(map, null,options);
+
+			var data = JSON.parse(reader.result);
+			//console.log(data);
+			var datareadtimestamp = Date.now();
+			console.log("tempo de leitura do ficheiro: " + (datareadtimestamp-time)/1000  + " segundos");
+			//rtreetest = new PolygonLookup(data);
+			//var treeinsertstimestamp = Date.now();
+			//console.log("tempo de construção da R-Tree: " + (treeinsertstimestamp-datareadtimestamp)/1000  + " segundos");
+			
+		
+		
+			Gisplay.makeProportionalSymbolsMap(map, data ,options,null);
+			
+
+			/*console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
+			console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");*/
+
+		}
+		reader.readAsText(document.getElementById("file").files[0]);
+		
+		
+
+		
+		
+		
+	}
+
+	</script>
+
+
+	</body>
+
+
+
+
+</html>

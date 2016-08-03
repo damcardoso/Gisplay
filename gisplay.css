@@ -1,0 +1,58 @@
+		._gisplaycircle{
+			border-radius: 50%;
+			-webkit-border-radius: 50%;
+            -moz-border-radius: 50%;
+            -o-border-radius: 50%;
+            -ms-border-radius: 50%;
+            margin:auto;
+		}
+
+		._gisplayfade {
+   			opacity: 0.5;
+		    transition: opacity .25s ease-in-out;
+		    -moz-transition: opacity .25s ease-in-out;
+		    -webkit-transition: opacity .25s ease-in-out;
+		    -o-transition: opacity .25s ease-in-out;
+		    -ms-transition: opacity .25s ease-in-out;
+   		}
+
+   		._gisplayfade:hover {
+      		opacity: 1;
+     	}
+
+     	._gisplayLoaderOuterDiv{
+     		opacity: 0.5; 
+     		background-color: grey; 
+     		justify-content: center; 
+     		display: flex;
+			position: absolute;
+			z-index: 999999999;
+     	}
+
+     	._gisplayloader {
+		  border: 16px solid #f3f3f3;
+		  border-radius: 50%;
+		  border-top: 16px solid blue;
+		  border-right: 16px solid green;
+		  border-bottom: 16px solid red;
+		  border-left: 16px solid yellow;
+		  width: 120px;
+		  height: 120px;
+		  -webkit-animation: gisplayspin 2s linear infinite;
+		  -moz-animation: gisplayspin 2s linear infinite;
+		  -o-animation: gisplayspin 2s linear infinite;
+		  -ms-animation: gisplayspin 2s linear infinite;
+		  animation: gisplayspin 2s linear infinite;
+		  margin:auto;
+		
+
+		}
+
+		@keyframes gisplayspin {
+		    0% { transform: rotate(0deg); }
+		    100% { transform: rotate(360deg); }
+		}
+
+		._gisplayhidden{
+			display:none;
+		}
