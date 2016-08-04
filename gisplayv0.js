@@ -1194,6 +1194,10 @@
 
 			},
 
+			drawContinuousPolygons: function(aes){
+
+			},
+
 			drawProporcionalPoints: function(aes){
 
 				var gl = this._webgl.gl;
@@ -1586,6 +1590,36 @@
 				this.legend.insertLegend(this.map);
 			}
 		}
+	 });
+
+
+	 function ChangeMap(){
+	 	bgmap, geometry, options){
+		this.geometry = geometry;
+		this.aesthetics = new Array();
+		this.annotations = new Array();
+		this.loadOptions(options, bgmap);
+		this.id=mapcount++;
+		this.type='CP';
+		maps.push(this);
+		this.initialize();	
+
+		return this;
+	 };
+
+	 ChangeMap.prototype = Object.create(Map.prototype,{
+	 	draw: {
+	 		value: function(){
+				this.clear();
+				for(var i = 0; i<this.aesthetics.length; i++){
+					if(this.aesthetics[i].enabled == true){
+						this.drawContinuousPolygons(this.aesthetics[i]);
+					}
+					this.drawBorders(this.aesthetics[i]);
+				}
+			}
+		}
+
 	 });
 	
 	 function Gisplay(){
