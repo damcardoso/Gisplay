@@ -6,6 +6,26 @@
 	
 	var mapcount = 0;
 
+
+	function round(value, exp) {
+	  if (typeof exp === 'undefined' || +exp === 0)
+	    return Math.round(value);
+
+	  value = +value;
+	  exp = +exp;
+
+	  if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0))
+	    return NaN;
+
+	  // Shift
+	  value = value.toString().split('e');
+	  value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
+
+	  // Shift back
+	  value = value.toString().split('e');
+	  return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
+	}
+
 	//end general
 
 	//WebGL API
@@ -165,10 +185,19 @@
 		},
 
 		insertPointRow: function(currentaes, mapobj){
+			this.insertRow(currentaes,mapobj, 2);
+		},
+
+		insertPolygonRow: function(currentaes, mapobj){
+			this.insertRow(currentaes,mapobj, 1);
+		},
+
+
+		insertRow: function(currentaes, mapobj, type){
+
 			var row = document.createElement('tr');
 			var value = document.createElement('td');
 			var color = document.createElement('td');
-			//var ptext = document.createElement('p');
 			var text;
 			if(typeof currentaes.range[0] === 'number'){
 				var mininput = currentaes.range[0]!=null?currentaes.range[0]:mapobj.min;
@@ -177,79 +206,33 @@
 					text = document.createTextNode('[' + mininput + ', ' + maxinput + '[');
 				else
 					text = document.createTextNode('[' + mininput + ', ' + maxinput + ']');
-				
 			}
 			else
 				text = document.createTextNode(currentaes.range[0]);
-			text.verticalAlign = 'center';
-			
 			value.appendChild(text);
 
 			var colorDiv = document.createElement('div');
 			colorDiv.style.position = 'relative';
 			var rgbc = 'rgba('+ currentaes.fillColor[0] +',' + currentaes.fillColor[1] +',' + currentaes.fillColor[2] +  ',' + currentaes.fillColor[3] +')';
-			//console.log(rgbc);
 			colorDiv.style['backgroundColor'] = rgbc;
-			
-			var size;
-			if(currentaes.pointSize != null){
-				size = Math.max(currentaes.pointSize, 5);
+			if(type==1){//polygon
+				colorDiv.style.height = 25;//(mapCanvas.height / 10);
+				colorDiv.style.width = 80;//(mapCanvas.width / 10);
+				if(currentaes.strokeColor!=null && currentaes!=undefined)
+					colorDiv.style['borderColor'] = 'rgba('+currentaes.strokeColor[0] +',' + currentaes.strokeColor[1] +',' + currentaes.strokeColor[2] +  ',' + currentaes.strokeColor[3] +')';
+				colorDiv.className = '_gisplayrectangle';
 			}
-			else
-				size = 25;
-			colorDiv.style.height = size;
-			colorDiv.style.width = size;
-			//colorDiv.style['-moz-border-radius'] = size/2; not working
-
-			colorDiv.className = '_gisplaycircle';
-
-
-			color.appendChild(colorDiv);
-
-			row.appendChild(color);
-			row.appendChild(value);
-			
-
-			row.onclick = function(){
-				var toFade = !currentaes.enableDisable();
-				if(toFade==true){
-					this.className += " _gisplayfade";
+			else if(type==2){//point
+				var size;
+				if(currentaes.pointSize != null){
+					size = Math.max(currentaes.pointSize, 5);
 				}
-				else{
-					this.className = this.className.replace( /(?:^|\s)_gisplayfade(?!\S)/g , '' );
-				}
-				mapobj.draw();
-			};
-
-
-			this.table.appendChild(row);
-		},
-
-		insertPolygonRow: function(currentaes, mapobj){
-			var row = document.createElement('tr');
-			var value = document.createElement('td');
-			var color = document.createElement('td');
-			var text;
-			if(typeof currentaes.range[0] === 'number'){
-				var mininput = currentaes.range[0]!=null?currentaes.range[0]:mapobj.min;
-				var maxinput = currentaes.range[1]!=null?currentaes.range[1]:mapobj.max;
-				if(currentaes.outer == false)
-					text = document.createTextNode('[' + mininput + ', ' + maxinput + '[');
 				else
-					text = document.createTextNode('[' + mininput + ', ' + maxinput + ']');
+					size = 25;
+				colorDiv.style.height = size;
+				colorDiv.style.width = size;
+				colorDiv.className = '_gisplaycircle';
 			}
-			else
-				text = document.createTextNode(currentaes.range[0]);
-			value.appendChild(text);
-
-			var colorDiv = document.createElement('div');
-			colorDiv.style.position = 'relative';
-			 var rgbc = 'rgba('+ currentaes.fillColor[0] +',' + currentaes.fillColor[1] +',' + currentaes.fillColor[2] +  ',' + currentaes.fillColor[3] +')';
-			//console.log(rgbc);
-			colorDiv.style['backgroundColor'] = rgbc;
-			colorDiv.style.height = 25;//(mapCanvas.height / 10);
-			colorDiv.style.width = 80;//(mapCanvas.width / 10);
-
 
 
 			color.appendChild(colorDiv);
@@ -260,48 +243,104 @@
 
 
 			row.onclick = function(){
-				var toFade = !currentaes.enableDisable();
-				if(toFade==true){
-					this.className += " _gisplayfade";
+				if(mapobj.legendToggle != false){
+					var toFade = !currentaes.enableDisable();
+					if(toFade==true){
+						this.className += " _gisplayfade";
+					}
+					else{
+						this.className = this.className.replace( /(?:^|\s)_gisplayfade(?!\S)/g , '' );
+					}
 				}
-				else{
-					this.className = this.className.replace( /(?:^|\s)_gisplayfade(?!\S)/g , '' );
-				}
+				mapobj.legendOnClickCall(currentaes);
 				mapobj.draw();
+				
 			};
 
 			this.table.appendChild(row);
+
 		},
+
 
 		insertGradient: function(aesarray){
 
 		},
 
-		init: function(id){
+		init: function(id,classname){
 			var mapCanvas = document.getElementById('mapCanvas' + id);
-		this.legendDiv = document.createElement('div');
-		this.legendDiv.id = 'legendDiv' + id;
-		this.legendDiv.style.position = 'absolute';
-		this.legendDiv.style.backgroundColor = 'white';
-			//legendDiv.style.height = 200;//(mapCanvas.height / 10);
-		this.legendDiv.style.width = 250;//(mapCanvas.width / 10);
-		this.legendDiv.style.bottom = 20;
-		this.legendDiv.style.right = 0;
-		this.legendDiv.style.borderColor = 'black';
-		this.legendDiv.style.border = 'solid';
+			this.legendDiv = document.createElement('div');
+			if(classname != undefined && classname != null){
+				this.legendDiv.className = classname;	
+			}
+			else{
+				this.legendDiv.className = '_gisplaylegendBR';
+			}
+			this.legendDiv.id = 'legendDiv' + id;
+			
 
 
-		this.table = document.createElement('table');
-		var thvalue = document.createElement('th');
-		var thcolor = document.createElement('th');
-		thcolor.style.align = "center";
-			//thvalue.style.width = 125;
-		this.table.style.zIndex = "2000";
-		thcolor.style.width = 100;
-		this.table.appendChild(thcolor);
-		this.table.appendChild(thvalue);
+
+
+			this.table = document.createElement('table');
+			this.table.style.zIndex = "2000";
+			var thvalue = document.createElement('th');
+			var thcolor = document.createElement('th');
+			thcolor.style.align = "center";
+			//thcolor.style.width = 100;
+			this.table.appendChild(thcolor);
+			this.table.appendChild(thvalue);
+
+		},
+
+		insertProportionalRow: function(currentaes, mapobj, numberof){
+			var row = document.createElement('tr');
+			var value = document.createElement('td');
+			value.colSpan = 2;
+			value.style.textAlign = 'center';
+			var lastdiv;
+			var rgbc = 'rgba('+ currentaes.fillColor[0] +',' + currentaes.fillColor[1] +',' + currentaes.fillColor[2] +  ',' + 1 +')';
+			var strokecolor;
+			var lastdiv;
+			if(currentaes.strokeColor!=null && currentaes!=undefined)
+				strokecolor = 'rgba('+currentaes.strokeColor[0] +',' + currentaes.strokeColor[1] +',' + currentaes.strokeColor[2] +  ',' + currentaes.strokeColor[3] +')';
+			else
+				strokecolor = 'rgba('+0 +',' + 0 +',' + 0 +  ',' + 1 +')';
+
+			for(var i =numberof-1; i>=0; i--){
+				var current = document.createElement('div');
+				var propvalue = mapobj.min + i/(numberof-1)*(mapobj.max - mapobj.min);
+				var text = document.createTextNode(round(propvalue));
+				current.appendChild(text);
+				var colorDiv = document.createElement('div');
+				colorDiv.style.position = 'relative';
+				colorDiv.style.backgroundColor = rgbc;
+				colorDiv.className = '_gisplayproportionalcircle';
+				colorDiv.style.borderColor = strokecolor;
+				var temppointsize = ((mapobj.maxpointsize - mapobj.minpointsize)/(mapobj.max - mapobj.min))*(propvalue - mapobj.min);
+				var size = Math.max(temppointsize, 5);
+				colorDiv.style.height = size;
+				colorDiv.style.width = size;
+				current.appendChild(colorDiv);
+				if(i!= (numberof-1)){
+					lastdiv.appendChild(current);
+					lastdiv = colorDiv;
+				}
+				else{
+					value.appendChild(current);
+					lastdiv = colorDiv;
+				}
+
+			}
+			row.appendChild(value);
+			this.table.appendChild(row);
+
 
 		}
+
+
+
+
+
 
 	};
 
@@ -400,19 +439,7 @@
 
 
 	function Map(type, geometry){
-		this.type = type;
-		this.aesthetics = new Array();
-		this.legend;
-		this.annotations = new Array();
-		this.backgroundmap;
-		this._polybuffer = new Array();
-		this._tribuffer = new Array();
-		this._pointbuffer = new Array();
-		//this._attr = attr;
-		this.map = '';
-		this.id=maps.length;
-		maps.push(this);
-		
+
 		return this;
 	};
 
@@ -553,10 +580,10 @@
 						for(var i = 0; i < breaks.length-1; i++){
 							var color = chroma(fcolor[i]).rgb();
 							if(i!=breaks.length-2){
-								var aes = new Aesthetic(i, this.attr, [Math.round(color[0]), Math.round(color[1]), Math.round(color[2]), 1], [0,0,0,1], null, [breaks[i], breaks[i+1]]);
+								var aes = new Aesthetic(i, this.attr, [Math.round(color[0]), Math.round(color[1]), Math.round(color[2]), this.alpha], [0,0,0,1], null, [breaks[i], breaks[i+1]]);
 							}
 							else{
-								var aes = new Aesthetic(i, this.attr, [Math.round(color[0]), Math.round(color[1]), Math.round(color[2]), 1], [0,0,0,1], null, [breaks[i], breaks[i+1]]);
+								var aes = new Aesthetic(i, this.attr, [Math.round(color[0]), Math.round(color[1]), Math.round(color[2]), this.alpha], [0,0,0,1], null, [breaks[i], breaks[i+1]]);
 								aes.outer = true;
 							}
 							aesarray.push(aes);
@@ -564,7 +591,7 @@
 					}
 					else{
 						color = chroma(colorscheme[0]).rgb();
-						var aes = new Aesthetic(i, this.attr, [Math.round(color[0]), Math.round(color[1]), Math.round(color[2]), 1], [0,0,0,1], null, [breaks[0], breaks[1]]);
+						var aes = new Aesthetic(i, this.attr, [Math.round(color[0]), Math.round(color[1]), Math.round(color[2]), this.alpha], [0,0,0,1], null, [breaks[0], breaks[1]]);
 						aes.outer = true;
 						aesarray.push(aes);
 					}
@@ -629,7 +656,7 @@
 			}
 			if(!flag){
 				//TODO
-				console.log("TODO: feature does not fit into any of the aesthetics defined.\n Value: " + properties['f3']);
+				console.log("TODO: feature does not fit into any of the aesthetics defined.\n Value: " + properties[this.attr]);
 			}
 		},
 
@@ -729,23 +756,9 @@
 			 {
 			 	var properties = geojson.features[g].properties;
 			 	geojson.features[g].properties['_gisplayid'] = g;
-
-
-			 	if(this.type =='PS' && this.dynamic ==true){
-			 		if(this.max==null)
-			 			this.max = properties[this.attr];
-			 		else
-			 			this.max = Math.max(this.max, properties[this.attr]);
-			 		
-					if(this.min==null)
-			 			this.min = properties[this.attr];
-			 		else
-			 			this.min = Math.min(this.min, properties[this.attr]);
-			 	}
-			 	
-
-
-
+				if(typeof geojson.features[g].properties[this.minuend] == 'number' && geojson.features[g].properties[this.minuend] != null && typeof geojson.features[g].properties[this.subtrahend] == 'number' && geojson.features[g].properties[this.subtrahend] != null){
+					geojson.features[g].properties['change'] = geojson.features[g].properties[this.minuend] - geojson.features[g].properties[this.subtrahend];
+				}			 	
 
 
 			 	if(geojson.features[g].geometry.type == "Polygon" || geojson.features[g].geometry.type == "MultiPolygon"){
@@ -1196,6 +1209,88 @@
 
 			drawContinuousPolygons: function(aes){
 
+				var gl = this._webgl.gl;
+				if (gl == null) return;
+				var matrixProjection = new Float32Array(16);
+
+				//gl.clear(gl.COLOR_BUFFER_BIT);
+				//gl.disable(gl.DEPTH_TEST);
+
+				//gl.enable(gl.BLEND);
+				//gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+
+				var currentZoom = this.map.getZoom();
+				var pointSize = Math.max(currentZoom - 5.0, 1.0);
+
+				matrixProjection.set(this._webgl.projection);
+
+				var scale = Math.pow(2, currentZoom);
+				this.scaleProjection(matrixProjection, scale, scale);
+
+				var offset = this.latLongToPixelXY(this.map.getLngBound(), this.map.getLatBound());
+				this.translateProjection(matrixProjection, -offset.x, -offset.y);
+
+				var projectionLocation = gl.getUniformLocation(this._webgl.program, 'projection');
+				gl.uniformMatrix4fv(projectionLocation, false, matrixProjection);
+
+				var vertexSizeLocation = gl.getAttribLocation(this._webgl.program, 'aPointSize');
+				gl.vertexAttrib1f(vertexSizeLocation, pointSize);
+
+				var isPointLocation = gl.getUniformLocation(this._webgl.program, 'isPoint');
+				gl.uniform1f(isPointLocation, 0.0);
+
+
+
+				var vertexCoordLocation = gl.getAttribLocation(this._webgl.program, 'vertexCoord');
+				
+
+				var vertexColorLocation =  gl.getUniformLocation(this._webgl.program, "u_color");
+				
+
+
+				/** 
+				 * 
+				 *  Draw Polygons' Interior
+				 *  **/
+				var fsize = Float32Array.BYTES_PER_ELEMENT;
+				//console.log("Numero de Buffers: ", buffers.length);
+
+				
+				
+
+
+
+				for (var i = 0; i < aes._features.length; i++) {
+					for(var y = 0; y<aes._features[i]._triangles.length; y++){
+						var color;
+						var diff = aes._features[i]._properties['change'];
+						if(diff == 0)
+							color = aes.fillColor(0.5);
+						else{
+							if(diff>0){
+								color = aes.fillColor(0.5 + diff/this.max/2);
+							}else{
+								color = aes.fillColor(0.5 - diff/this.min/2);
+							}
+						}
+
+
+						gl.uniform4f(vertexColorLocation, color[0]/255, color[1]/255, color[2]/255, this.alpha);
+					 	gl.bindBuffer(gl.ARRAY_BUFFER, aes._features[i]._triangles[y]);
+				
+						gl.enableVertexAttribArray(vertexCoordLocation);
+						gl.vertexAttribPointer(vertexCoordLocation, 2, gl.FLOAT, false, fsize * 2, 0);
+					 	//gl.vertexAttribPointer(vertexColorLocation, 4, gl.FLOAT, false, fsize * 6, fsize * 2);
+					 	//gl.enableVertexAttribArray(vertexColorLocation);
+
+					 	
+
+					 	gl.drawArrays(gl.TRIANGLES, 0, aes._features[i]._triangles[y].numItems);	
+					}
+				}
+
+
 			},
 
 			drawProporcionalPoints: function(aes){
@@ -1342,7 +1437,8 @@
 										}
 									}
 									alert(s);
-
+									if(maps[mappos].mapOnClickCall!= undefined && maps[mappos].mapOnClickCall != null)
+										maps[mappos].mapOnClickCall(bool);
 								}
 							}
 							if(maps[mappos].kdtree != undefined){
@@ -1384,6 +1480,8 @@
 										}
 									}
 									alert(s);
+									if(maps[mappos].mapOnClickCall!= undefined && maps[mappos].mapOnClickCall != null)
+										maps[mappos].mapOnClickCall(bool);
 
 								}
 
@@ -1424,6 +1522,7 @@
 				else if(options.showPropertiesOnClick!=undefined){
 					this.showPropertiesOnClick = options.showPropertiesOnClick;
 				}
+				this.alpha = options.alpha!=undefined?options.alpha:0.5;
 				this.interactive = options.interactive==undefined?true:!options.interactive;
 				this.attr = options.attr;
 				this.dynamic = options.dynamic==undefined?false:options.dynamic;
@@ -1432,7 +1531,8 @@
 				this.colorscheme = options.colorScheme;
 				this.numberofclasses = options.numberOfClasses;
 				this.algorithm = options.classBreaksMethod;
-
+				this.legendOnClickCall = options.legendOnClickFunction;
+				this.mapOnClickCall = options.mapOnClickFunction;
 				
 
 			},
@@ -1584,17 +1684,17 @@
 		buildLegend: { //override
 			value: function(){
 				this.legend = new Legend(this.id);
-				for(var a in this.aesthetics){
+				/*for(var a in this.aesthetics){
 					this.legend.insertPointRow(this.aesthetics[a], this);
 				}
-				this.legend.insertLegend(this.map);
+				this.legend.insertLegend(this.map);*/
+
 			}
 		}
 	 });
 
 
-	 function ChangeMap(){
-	 	bgmap, geometry, options){
+	 function ChangeMap(bgmap, geometry, options){
 		this.geometry = geometry;
 		this.aesthetics = new Array();
 		this.annotations = new Array();
@@ -1617,6 +1717,31 @@
 					}
 					this.drawBorders(this.aesthetics[i]);
 				}
+			}
+		},
+
+		preProcessData: {
+			value: function(geojson, numberOf, algorithm, colorscheme){
+
+				var aesarray = [];
+				var values = [];
+				var breaks;
+				var fcolor;
+				for(var g = 0; g<geojson.features.length && (this.maxfeatures ==undefined || g<this.maxfeatures); g++){
+					if(typeof geojson.features[g].properties[this.minuend] == 'number' && geojson.features[g].properties[this.minuend] != null && typeof geojson.features[g].properties[this.subtrahend] == 'number' && geojson.features[g].properties[this.subtrahend] != null){
+						this.max = Math.max(this.max, geojson.features[g].properties[this.minuend] - geojson.features[g].properties[this.subtrahend]);
+						this.min = Math.min(this.min, geojson.features[g].properties[this.minuend] - geojson.features[g].properties[this.subtrahend]);
+					}
+				}
+				breaks = [this.min,this.max];
+				fcolor = chroma.scale(colorscheme);
+				var aes = new Aesthetic(i, this.attr, fcolor, [0,0,0,1], null, [breaks[0], breaks[1]]);
+				aes.outer = true;
+				aesarray.push(aes);
+
+				this.aesthetics = aesarray;
+
+
 			}
 		}
 

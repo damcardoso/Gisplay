@@ -57,10 +57,14 @@
 		,sizeByClass: true
 		,attr: 'f3'
 		,dynamic: false
+		,alpha: 0.7
 		//,interactive: true
 		//,showPropertiesOnClick: ['f1', "State", 'f2', 'County'] //choropleth file
 		//,showPropertiesOnClick: ['f1', "Alcohol", 'f2', 'Victims'] //dot map file
 		,maxFeatures: 5000
+		,legendOnClickFunction: function(e){alert('test legend');}
+		,mapOnClickFunction: function(e){alert('test map');}
+
 	};
 
 
