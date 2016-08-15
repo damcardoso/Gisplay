@@ -32,7 +32,7 @@
 
 
 	function generateShaders(){
-		//choropleth
+		//general
 
 		var vertexSourceCode = " attribute vec4 vertexCoord; " ;
 			vertexSourceCode+= "\n	attribute float aPointSize; " ;
@@ -47,32 +47,43 @@
 
 
 		var fragmentSourceCode = "precision mediump float;";
-		fragmentSourceCode += "\n		uniform vec4 u_color;";//uniform
-		fragmentSourceCode += "\n		varying float v_opacity; ";
-		fragmentSourceCode += "\n 		uniform float isPoint;";
-		fragmentSourceCode += "\n		void main(){";
-		fragmentSourceCode += "\n			float border = 0.5;";
-	 	fragmentSourceCode += "\n			float radius = 0.5;";
-	 	fragmentSourceCode += "\n			float centerDist = length(gl_PointCoord - 0.5);";
-		fragmentSourceCode += "\n			float alpha;";
-		fragmentSourceCode += "\n			if (u_color[3] == -1.0){";
-		fragmentSourceCode += "\n				alpha =  v_opacity * step(centerDist, radius);";
-		fragmentSourceCode += "\n			}";
-		fragmentSourceCode += "\n			else{";
-		fragmentSourceCode += "\n				alpha =  u_color[3] * step(centerDist, radius);";
-		fragmentSourceCode += "\n			}";
-		fragmentSourceCode += "\n			if(isPoint == 1.0 ){";
-		fragmentSourceCode += "\n			if (alpha < 0.1) discard;";
-		fragmentSourceCode += "\n				gl_FragColor = vec4(u_color[0], u_color[1], u_color[2], alpha);}";
-		fragmentSourceCode += "\n 			else";
-		fragmentSourceCode += "\n				gl_FragColor = vec4(u_color[0], u_color[1], u_color[2], u_color[3]);";
-	 	fragmentSourceCode += "\n		}";
+			fragmentSourceCode += "\n		uniform vec4 u_color;";//uniform
+			fragmentSourceCode += "\n		varying float v_opacity; ";
+			fragmentSourceCode += "\n 		uniform float isPoint;";
+			fragmentSourceCode += "\n		void main(){";
+			fragmentSourceCode += "\n			float border = 0.5;";
+		 	fragmentSourceCode += "\n			float radius = 0.5;";
+		 	fragmentSourceCode += "\n			float centerDist = length(gl_PointCoord - 0.5);";
+			fragmentSourceCode += "\n			float alpha;";
+			fragmentSourceCode += "\n			if (u_color[3] == -1.0){";
+			fragmentSourceCode += "\n				alpha =  v_opacity * step(centerDist, radius);";
+			fragmentSourceCode += "\n			}";
+			fragmentSourceCode += "\n			else{";
+			fragmentSourceCode += "\n				alpha =  u_color[3] * step(centerDist, radius);";
+			fragmentSourceCode += "\n			}";
+			fragmentSourceCode += "\n			if(isPoint == 1.0 ){";
+			fragmentSourceCode += "\n			if (alpha < 0.1) discard;";
+			fragmentSourceCode += "\n				gl_FragColor = vec4(u_color[0], u_color[1], u_color[2], alpha);}";
+			fragmentSourceCode += "\n 			else";
+			fragmentSourceCode += "\n				gl_FragColor = vec4(u_color[0], u_color[1], u_color[2], u_color[3]);";
+		 	fragmentSourceCode += "\n		}";
 
+
+		var heatmapVertex0 = 'attribute vec4 position, intensity; attribute vec2 delta; attribute float aPointSize; uniform mat4 projection; varying vec2 off, dim; varying float vIntensity; void main() {vIntensity = intensity.x; \n \n dim = abs(delta); \n off = delta; \n vec4 mypos = (projection * position);  \n vec2 pos = mypos.xy + delta; \n gl_Position = vec4(pos,0,1);';
+			heatmapVertex0 += ' \n gl_PointSize = aPointSize;';
+			heatmapVertex0 +=' \n }';
 			
-/**/
-
-
-		return {vertex: vertexSourceCode, fragment: fragmentSourceCode};
+		var getColorFun = 'vec3 getColor(float intensity){\n    vec3 blue = vec3(0.0, 0.0, 1.0);\n    vec3 cyan = vec3(0.0, 1.0, 1.0);\n    vec3 green = vec3(0.0, 1.0, 0.0);\n    vec3 yellow = vec3(1.0, 1.0, 0.0);\n    vec3 red = vec3(1.0, 0.0, 0.0);\n\n    vec3 color = (\n        fade(-0.25, 0.25, intensity)*blue +\n        fade(0.0, 0.5, intensity)*cyan +\n        fade(0.25, 0.75, intensity)*green +\n        fade(0.5, 1.0, intensity)*yellow +\n        smoothstep(0.75, 1.0, intensity)*red\n    );\n    return color;\n}';
+		var output = " vec4 alphaFun(vec3 color, float intensity){\n    float alpha = smoothstep(0.0, 1.0, intensity);\n    return vec4(color*alpha, alpha);\n}";
+	
+		var heatmapFragment0 = '#ifdef GL_FRAGMENT_PRECISION_HIGH\n    precision highp int;\n    precision highp float;\n#else\n    precision mediump int;\n    precision mediump float;\n#endif\nvarying vec2 off, dim;\nvarying float vIntensity;\n float linstep(float low, float high, float value){\n    return clamp((value-low)/(high-low), 0.0, 1.0);\n} \n float fade(float low, float high, float value){\n    float mid = (low+high)*0.5;\n    float range = (high-low)*0.5;\n    float x = 1.0 - clamp(abs(mid-value)/range, 0.0, 1.0);\n    return smoothstep(0.0, 1.0, x);\n}\n\n' + getColorFun + "\n" + output +  ' void main(){\n    float falloff = (1.0 - smoothstep(0.0, 1.0, length(off/dim)));\n    float intensity = falloff*vIntensity;\n   gl_FragColor = vec4(intensity);\n}';	
+			
+		var heatmapVertex1 ='attribute vec4 position; varying vec2 texcoord; \nvoid main(){\n  texcoord = position.xy*0.5+0.5;\n highp float y = (-position.y); gl_Position = vec4(position.x, y, position.zw);\n}';
+		var getColorFun1 = 'vec3 getColor(float intensity){\n    vec3 blue = vec3(0.0, 0.0, 1.0);\n    vec3 cyan = vec3(0.0, 1.0, 1.0);\n    vec3 green = vec3(0.0, 1.0, 0.0);\n    vec3 yellow = vec3(1.0, 1.0, 0.0);\n    vec3 red = vec3(1.0, 0.0, 0.0);\n\n    vec3 color = (\n        fade(-0.25, 0.25, intensity)*blue +\n        fade(0.0, 0.5, intensity)*cyan +\n        fade(0.25, 0.75, intensity)*green +\n        fade(0.5, 1.0, intensity)*yellow +\n        smoothstep(0.75, 1.0, intensity)*red\n    );\n    return color;\n}';
+		var output1 = " vec4 alphaFun(vec3 color, float intensity){\n    float alpha = smoothstep(0.0, 1.0, intensity);\n    return vec4(color*alpha, alpha);\n}";
+		var heatmapFragment1 = '#ifdef GL_FRAGMENT_PRECISION_HIGH\n    precision highp int;\n    precision highp float;\n#else\n    precision mediump int;\n    precision mediump float;\n#endif\n uniform sampler2D source; varying vec2 texcoord; \n  float fade(float low, float high, float value){\n    float mid = (low+high)*0.5;\n    float range = (high-low)*0.5;\n  highp float x = 1.0 - clamp(abs(mid-value)/range, 0.0, 1.0);\n    return smoothstep(0.0, 1.0, x);\n}\n\n' + getColorFun1 + "\n" + output1 +  ' \n void main(){\n    vec4 color = texture2D(source, texcoord); \n float intensity = smoothstep(0.0, 1.0, texture2D(source, texcoord).w); \n  \n gl_FragColor = vec4(alphaFun(getColor(intensity), intensity));\n}';
+		
+		return {vertex: vertexSourceCode, fragment: fragmentSourceCode, heatmapVertex0: heatmapVertex0, heatmapFragment0: heatmapFragment0, heatmapVertex1: heatmapVertex1, heatmapFragment1: heatmapFragment1};
 	}
 
 
@@ -449,7 +460,10 @@
 
 		program: function() {
 			this._webgl.program = this._webgl.gl.createProgram();
-
+			this._webgl.heatmapProgram = [];
+			this._webgl.heatmapProgram[0] = this._webgl.gl.createProgram();
+			this._webgl.heatmapProgram[1] = this._webgl.gl.createProgram();
+			
 			var source_code = generateShaders();
 
 			var vertex_shader = shader(this._webgl.gl.VERTEX_SHADER, source_code.vertex, this._webgl);
@@ -460,6 +474,20 @@
 
 			this._webgl.gl.linkProgram(this._webgl.program);
 			this._webgl.gl.useProgram(this._webgl.program);
+			
+			var heatmapVertex0 = shader(this._webgl.gl.VERTEX_SHADER, source_code.heatmapVertex0, this._webgl);
+			var heatmapFragment0 = shader(this._webgl.gl.FRAGMENT_SHADER, source_code.heatmapFragment0, this._webgl);
+
+			this._webgl.gl.attachShader(this._webgl.heatmapProgram[0], heatmapVertex0);
+			this._webgl.gl.attachShader(this._webgl.heatmapProgram[0], heatmapFragment0);
+			this._webgl.gl.linkProgram(this._webgl.heatmapProgram[0]);
+
+			var heatmapVertex1 = shader(this._webgl.gl.VERTEX_SHADER, source_code.heatmapVertex1, this._webgl);
+			var heatmapFragment1 = shader(this._webgl.gl.FRAGMENT_SHADER, source_code.heatmapFragment1, this._webgl);
+
+			this._webgl.gl.attachShader(this._webgl.heatmapProgram[1], heatmapVertex1);
+			this._webgl.gl.attachShader(this._webgl.heatmapProgram[1], heatmapFragment1);
+			this._webgl.gl.linkProgram(this._webgl.heatmapProgram[1]);
 			
 		},
 
@@ -756,7 +784,7 @@
 			 {
 			 	var properties = geojson.features[g].properties;
 			 	geojson.features[g].properties['_gisplayid'] = g;
-				if(typeof geojson.features[g].properties[this.minuend] == 'number' && geojson.features[g].properties[this.minuend] != null && typeof geojson.features[g].properties[this.subtrahend] == 'number' && geojson.features[g].properties[this.subtrahend] != null){
+				if(this.minued != undefined && this.subtrahend != undefined && typeof geojson.features[g].properties[this.minuend] == 'number' && geojson.features[g].properties[this.minuend] != null && typeof geojson.features[g].properties[this.subtrahend] == 'number' && geojson.features[g].properties[this.subtrahend] != null){
 					geojson.features[g].properties['change'] = geojson.features[g].properties[this.minuend] - geojson.features[g].properties[this.subtrahend];
 				}			 	
 
@@ -1083,15 +1111,7 @@
 
 				gl.uniform4f(vertexColorLocation, aes.strokeColor[0]/255, aes.strokeColor[1]/255, aes.strokeColor[2]/255, aes.strokeColor[3]);
 				
-
-
-
-			
-
-
-
-				
-		for (var i = 0; i < aes._features.length; i++) {
+				for (var i = 0; i < aes._features.length; i++) {
 					for(var y = 0; y<aes._features[i]._borders.length; y++){
 
 					 	gl.bindBuffer(gl.ARRAY_BUFFER, aes._features[i]._borders[y]);
@@ -1539,6 +1559,118 @@
 
 			loader: function(){
 				this.map.loader();
+			},
+
+			drawHeatPoints: function(aes){
+				var gl = this._webgl.gl;
+
+				if (gl == null) return;
+				gl.useProgram(this._webgl.heatmapProgram[0]);
+				var matrixProjection = new Float32Array(16);
+
+				gl.clear(gl.COLOR_BUFFER_BIT);
+				gl.enable(gl.BLEND);
+				
+				gl.blendFunc(gl.ONE, gl.ONE);
+				
+				var currentZoom = map.getZoom();
+				var pointSize = Math.max(currentZoom - 5.0, 1.0);
+
+				matrixProjection.set(this._webgl.projection);
+
+				var scale = Math.pow(2, currentZoom);
+				this.scaleProjection(matrixProjection, scale, scale);
+
+				var offset = this.latLongToPixelXY(this.map.getLngBound(), this.map.getLatBound());
+				this.translateProjection(matrixProjection, -offset.x, -offset.y);
+
+
+				var projectionLocation = gl.getUniformLocation(this._webgl.heatmapProgram[0], 'projection');
+				gl.uniformMatrix4fv(projectionLocation, false, matrixProjection);
+		
+	
+				var vertexCoordLocation = gl.getAttribLocation(this._webgl.heatmapProgram[0], 'position');
+				var deltaLocation = gl.getAttribLocation(this._webgl.heatmapProgram[0], 'delta');
+				var intensityLoc = gl.getAttribLocation(this._webgl.heatmapProgram[0], 'intensity'); 
+				var vertexSizeLocation = gl.getAttribLocation(this._webgl.heatmapProgram[0], 'aPointSize');
+				
+				gl.vertexAttrib1f(vertexSizeLocation, pointSize);
+				
+				gl.enableVertexAttribArray(vertexCoordLocation);
+				gl.enableVertexAttribArray(deltaLocation);
+				gl.enableVertexAttribArray(intensityLoc);
+				
+
+		
+				var fsize = Float32Array.BYTES_PER_ELEMENT;
+			
+				
+				gl.vertexAttribPointer(vertexCoordLocation, 2, gl.FLOAT, false,fsize*8, 0*2);
+				gl.vertexAttribPointer(deltaLocation, 2, gl.FLOAT, false, fsize*8, 2 * 4);
+				gl.vertexAttribPointer(intensityLoc, 4, gl.FLOAT, false, fsize*8, 4 * 4);
+				
+				
+				gl.bindBuffer(gl.ARRAY_BUFFER, aes._allFeatures[0]._points[0]);
+				
+				gl.drawArrays(gl.TRIANGLES, 0, aes._allFeatures[0]._points[0].numItems/6);
+				
+				
+				gl.useProgram(this._webgl.heatmapProgram[1]);
+			
+				gl.disable(gl.BLEND);
+			
+				console.log("fase 1 concluida");
+
+				var canvas = document.getElementById('mapCanvas' + this.id);
+				
+				
+				
+				var source = gl.createTexture();
+				
+				gl.activeTexture(gl.TEXTURE0);
+				gl.bindTexture(gl.TEXTURE_2D, source);
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+				
+				function isPowerOf2(value) {
+				  return (value & (value - 1)) == 0;
+				};
+
+				function steupTextureFilteringAndMips(width, height, gl) {
+				  if (isPowerOf2(width) && isPowerOf2(height)) {
+					// the dimensions are power of 2 so generate mips and turn on 
+					// tri-linear filtering.
+					gl.generateMipmap(gl.TEXTURE_2D);
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+				  } else {
+					// at least one of the dimensions is not a power of 2 so set the filtering
+					// so WebGL will render it.
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+				  }
+				};
+
+
+
+				steupTextureFilteringAndMips(canvas.width, canvas.height, gl);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+				  
+				var vertices = new Float32Array([1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1]);
+				var buffer = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+				gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+				var positionLoc = gl.getAttribLocation(this._webgl.heatmapProgram[1], 'position');
+				var sourceLoc = gl.getUniformLocation(this._webgl.heatmapProgram[1], 'source');
+				var sourceLoc = gl.getUniformLocation(this._webgl.heatmapProgram[1], 'texcoord');
+				gl.enableVertexAttribArray(positionLoc);
+				gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+				gl.uniform1i(sourceLoc, 0);
+				gl.drawArrays(gl.TRIANGLES, 0, 6);
+				
+				//defaults to general program
+				console.log("fase 2 concluida");
+				this._webgl.gl.useProgram(this._webgl.program);
 			}
 
 	};
@@ -1700,7 +1832,7 @@
 		this.annotations = new Array();
 		this.loadOptions(options, bgmap);
 		this.id=mapcount++;
-		this.type='CP';
+		this.type='CM';
 		maps.push(this);
 		this.initialize();	
 
@@ -1746,6 +1878,157 @@
 		}
 
 	 });
+
+
+	 function HeatMap(bgmap, geometry, options){
+	 	this.geometry = geometry;
+		this.aesthetics = new Array();
+		this.annotations = new Array();
+		this.type = 'HM';
+		this.loadOptions(options, bgmap);
+		this.id=mapcount++;
+		maps.push(this);
+		this.initialize();
+
+		this.intensity = 0.1;
+		this.pointsize = 0.05;
+		this.addAesthetic(new Aesthetic(0, null, null, 0.1, 0.05, [null,null] ));
+		this.processData(geometry);
+		this.loader();
+
+		this.draw();
+
+
+		return this;
+	 };
+
+	 HeatMap.prototype = Object.create(Map.prototype,{
+
+	 	draw: {
+	 		value: function(){
+				this.clear();
+				for(var i = 0; i<this.aesthetics.length; i++){
+					if(this.aesthetics[i].enabled == true){
+						this.drawHeatPoints(this.aesthetics[i]);
+					}
+				}
+			}
+		},
+
+		buildLegend: {
+			value: function(){
+
+			}
+		},
+
+		processData: {
+			value: function(geojson) {
+			
+			
+			
+				console.log("numero de features: ", geojson.features.length);
+
+				var gl = this._webgl.gl;
+				var tempPoints = [];
+				tempPoints[0] = new Array();
+
+				for(var g = 0; g<geojson.features.length && (this.maxfeatures ==undefined || g<this.maxfeatures); g++)
+				{
+				 	var properties = geojson.features[g].properties;
+				 	geojson.features[g].properties['_gisplayid'] = g;
+							 	
+
+
+				 /*	if(geojson.features[g].geometry.type == "Point" && this.dynamic==true){
+						//dum
+						var currentPoints = []
+						currentPoints[0] = new Array();
+					 	var pixel = this.latLongToPixelXY(geojson.features[g].geometry.coordinates[0], geojson.features[g].geometry.coordinates[1]);
+					 	//6 insertions
+					 	currentPoints[0].push(pixel.x, pixel.y, - this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);	
+					 	currentPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	currentPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	currentPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	currentPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	currentPoints[0].push(pixel.x, pixel.y, this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	
+
+
+					 	var bufferP = [];
+					 	bufferP.push(gl.createBuffer());
+
+						var vertArray = new Float32Array(currentPoints[0]);
+						
+						gl.fsize = vertArray.BYTES_PER_ELEMENT;
+						gl.bindBuffer(gl.ARRAY_BUFFER, bufferP[0]);
+						gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
+
+						bufferP[0].itemSize=8;
+						bufferP[0].numItems=vertArray.length/8;
+
+						this.insertFeature(g, properties, [], [], bufferP);
+
+
+					}
+
+					else if(geojson.features[g].geometry.type == "Point" && this.dynamic==false){*/
+						//debugger;
+					 	/*
+					 	var pixel = this.latLongToPixelXY(geojson.features[g].geometry.coordinates[0], geojson.features[g].geometry.coordinates[1]);
+						tempPoints[0].push(pixel.x, pixel.y, - aes.pointSize, - aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);	
+					 	tempPoints[0].push(pixel.x, pixel.y, aes.pointSize, - aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);
+					 	tempPoints[0].push(pixel.x, pixel.y, - aes.pointSize, aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);
+					 	tempPoints[0].push(pixel.x, pixel.y, - aes.pointSize, aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);
+					 	tempPoints[0].push(pixel.x, pixel.y, aes.pointSize, - aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);
+					 	tempPoints[0].push(pixel.x, pixel.y, aes.pointSize, aes.pointSize, aes.strokeColor, aes.strokeColor, aes.strokeColor, aes.strokeColor);
+*/
+
+						var pixel = this.latLongToPixelXY(geojson.features[g].geometry.coordinates[0], geojson.features[g].geometry.coordinates[1]);
+
+						tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);	
+					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+
+						//}
+				 
+
+				}//end features loop
+				
+
+				//insert grouped points
+				if(tempPoints!=null){
+					for(var t=0; t<tempPoints.length;t++){
+						if(tempPoints[t].length>0){
+							var bufferP = [];
+						 	bufferP.push(gl.createBuffer());
+
+							var vertArray = new Float32Array(tempPoints[t]);
+							
+							gl.fsize = vertArray.BYTES_PER_ELEMENT;
+							gl.bindBuffer(gl.ARRAY_BUFFER, bufferP[0]);
+							gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
+
+							bufferP[0].itemSize=8;
+							bufferP[0].numItems=vertArray.length/8;
+							this.insertGroupedFeature(t, [],[], bufferP);
+						}
+					}
+					
+				}
+				
+			}
+			
+		}
+
+
+	 });
+
+
+
+
 	
 	 function Gisplay(){
 	 	return this;
