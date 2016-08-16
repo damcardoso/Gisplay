@@ -1604,16 +1604,16 @@
 		
 				var fsize = Float32Array.BYTES_PER_ELEMENT;
 			
-				
+				gl.bindBuffer(gl.ARRAY_BUFFER, aes._allFeatures[0]._points[0]);
 				gl.vertexAttribPointer(vertexCoordLocation, 2, gl.FLOAT, false,fsize*8, 0*2);
 				gl.vertexAttribPointer(deltaLocation, 2, gl.FLOAT, false, fsize*8, 2 * 4);
 				gl.vertexAttribPointer(intensityLoc, 4, gl.FLOAT, false, fsize*8, 4 * 4);
 				
 				
-				gl.bindBuffer(gl.ARRAY_BUFFER, aes._allFeatures[0]._points[0]);
 				
-				gl.drawArrays(gl.TRIANGLES, 0, aes._allFeatures[0]._points[0].numItems/6);
-				
+				console.log(aes._allFeatures[0]._points[0].numItems);
+				gl.drawArrays(gl.TRIANGLES, 0, aes._allFeatures[0]._points[0].numItems);
+			
 				
 				gl.useProgram(this._webgl.heatmapProgram[1]);
 			
@@ -1651,25 +1651,27 @@
 				};
 
 
-
+				
 				steupTextureFilteringAndMips(canvas.width, canvas.height, gl);
 				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-				  
+				
 				var vertices = new Float32Array([1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1]);
 				var buffer = gl.createBuffer();
 				gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 				gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 				var positionLoc = gl.getAttribLocation(this._webgl.heatmapProgram[1], 'position');
 				var sourceLoc = gl.getUniformLocation(this._webgl.heatmapProgram[1], 'source');
-				var sourceLoc = gl.getUniformLocation(this._webgl.heatmapProgram[1], 'texcoord');
 				gl.enableVertexAttribArray(positionLoc);
 				gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 				gl.uniform1i(sourceLoc, 0);
 				gl.drawArrays(gl.TRIANGLES, 0, 6);
-				
+
+
+				gl.disableVertexAttribArray(positionLoc);
 				//defaults to general program
 				console.log("fase 2 concluida");
+				gl.bindBuffer(gl.ARRAY_BUFFER, null);
 				this._webgl.gl.useProgram(this._webgl.program);
 			}
 
