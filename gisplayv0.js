@@ -449,7 +449,7 @@
 
 
 
-	function Map(type, geometry){
+	function Map(type, geometry, options){
 
 		return this;
 	};
@@ -492,9 +492,6 @@
 		},
 
 
-		readGeojson: function(geojson){
-
-		},
 
 		addAesthetic: function(aes){
 			this.aesthetics.push(aes);
@@ -684,7 +681,7 @@
 			}
 			if(!flag){
 				//TODO
-				console.log("TODO: feature does not fit into any of the aesthetics defined.\n Value: " + properties[this.attr]);
+				//console.log("TODO: feature does not fit into any of the aesthetics defined.\n Value: " + properties[this.attr]);
 			}
 		},
 
@@ -760,10 +757,6 @@
 			 		return polyarray;
 			 	}
 
-
-
-
-			console.log("something went wrong: workpolygon");
 		},
 
 		processData: function(geojson) {
@@ -1394,126 +1387,125 @@
 			},
 
 			initialize: function(){
-					this.max = null;
-					this.min = null;
-					this.createCanvas();
-					this.program();		
-					var mappos;
-					for(var i=0; i<maps.length;i++)
-						if(maps[i].id == this.id)
-							mappos = i;
-					this.map.onEvent('move', 
-						function() {
-							maps[mappos].draw();
-						}
-					);
+				this.max = null;
+				this.min = null;
+				this.createCanvas();
+				this.program();		
+				var mappos;
+				for(var i=0; i<maps.length;i++)
+					if(maps[i].id == this.id)
+						mappos = i;
+				this.map.onEvent('move', 
+					function() {
+						maps[mappos].draw();
+					}
+				);
 
-					if(this.interactive==true)
-						maps[mappos].map.onEvent('click', function (e) {
-					        // e.point is the x, y coordinates of the mousemove event relative
-					        // to the top-left corner of the map
-					        
-					            // e.lngLat is the longitude, latitude geographical position of the event
-							//alert("lat: " + e.latlng.lat + "\n lon: " + e.latlng.lng);
-
-
-							var lat = e.latlng.lat;
-							var lon = e.latlng.lng;
-
-							if(maps[mappos].rtree != undefined){
-								var bool = maps[0].rtree.search(lon, lat);
-								if(bool ==undefined)
-									return;
-								else{
-									//console.log
-									var s = "";
-									var first = true;
-									if(maps[mappos].showPropertiesOnClick != null){
-										for(var i=0; i< maps[mappos].showPropertiesOnClick.length; i+=2){
-												if(first){
-													s+= maps[mappos].showPropertiesOnClick[i+1] + ": " + bool.properties[maps[mappos].showPropertiesOnClick[i]];
-													first=false;
-												}
-												else{
-													s+= "\n" + maps[mappos].showPropertiesOnClick[i+1] + ": " + bool.properties[maps[mappos].showPropertiesOnClick[i]];
-												}
-											
-										}
-									}
-									else{
-									
-										var keys = Object.keys(bool.properties);
-										
-										for(var i=0; i< keys.length; i++){
-											if(keys[i] != "_gisplayid"){
-												if(first){
-													s+= keys[i] + ": " + bool.properties[keys[i]];
-													first=false;
-												}
-												else{
-													s+= "\n" + keys[i] + ": " + bool.properties[keys[i]];
-												}
-											}
-										}
-									}
-									alert(s);
-									if(maps[mappos].mapOnClickCall!= undefined && maps[mappos].mapOnClickCall != null)
-										maps[mappos].mapOnClickCall(bool);
-								}
-							}
-							if(maps[mappos].kdtree != undefined){
-								
-								var nearest = maps[mappos].kdtree.nearest({lat:lat, lon: lon},1,128/(Math.pow(2, map.getZoom()*2)));
-								if(nearest.length <= 0)
-									return;
-								else{
-									var bool = nearest[0][0];
-									//console.log
-									var s = "";
-									var first = true;
-									if(maps[mappos].showPropertiesOnClick != null){
-										for(var i=0; i< maps[mappos].showPropertiesOnClick.length; i+=2){
-												if(first){
-													s+= maps[mappos].showPropertiesOnClick[i+1] + ": " + bool.properties[maps[mappos].showPropertiesOnClick[i]];
-													first=false;
-												}
-												else{
-													s+= "\n" + maps[mappos].showPropertiesOnClick[i+1] + ": " + bool.properties[maps[mappos].showPropertiesOnClick[i]];
-												}
-											
-										}
-									}
-									else{
-									
-										var keys = Object.keys(bool.properties);
-										
-										for(var i=0; i< keys.length; i++){
-											if(keys[i] != "_gisplayid"){
-												if(first){
-													s+= keys[i] + ": " + bool.properties[keys[i]];
-													first=false;
-												}
-												else{
-													s+= "\n" + keys[i] + ": " + bool.properties[keys[i]];
-												}
-											}
-										}
-									}
-									alert(s);
-									if(maps[mappos].mapOnClickCall!= undefined && maps[mappos].mapOnClickCall != null)
-										maps[mappos].mapOnClickCall(bool);
-
-								}
-
-
-							}
-								
-							
-						});
+				this.setupOnclick(mappos);
+						
 
 			},
 
-			
+			setupOnclick: function(mappos){
+					
+				maps[mappos].map.onEvent('click', function (e) {
+					var lat = e.latlng.lat;
+					var lon = e.latlng.lng;
+
+					if(maps[mappos].rtree != undefined){
+						var bool = maps[0].rtree.search(lon, lat);
+						if(bool ==undefined)
+							return;
+						else{
+							//console.log
+							var s = "";
+							var first = true;
+							if(maps[mappos].showPropertiesOnClick != null){
+								for(var i=0; i< maps[mappos].showPropertiesOnClick.length; i+=2){
+										if(first){
+											s+= maps[mappos].showPropertiesOnClick[i+1] + ": " + bool.properties[maps[mappos].showPropertiesOnClick[i]];
+											first=false;
+										}
+										else{
+											s+= "\n" + maps[mappos].showPropertiesOnClick[i+1] + ": " + bool.properties[maps[mappos].showPropertiesOnClick[i]];
+										}
+									
+								}
+							}
+							else{
+							
+								var keys = Object.keys(bool.properties);
+								
+								for(var i=0; i< keys.length; i++){
+									if(keys[i] != "_gisplayid"){
+										if(first){
+											s+= keys[i] + ": " + bool.properties[keys[i]];
+											first=false;
+										}
+										else{
+											s+= "\n" + keys[i] + ": " + bool.properties[keys[i]];
+										}
+									}
+								}
+							}
+							if(maps[mappos].interactive==true)
+								alert(s);//todo
+							if(maps[mappos].mapOnClickCall!= undefined && maps[mappos].mapOnClickCall != null)
+								maps[mappos].mapOnClickCall(bool);
+						}
+					}
+					if(maps[mappos].kdtree != undefined){
+						
+						var nearest = maps[mappos].kdtree.nearest({lat:lat, lon: lon},1,128/(Math.pow(2, map.getZoom()*2)));
+						if(nearest.length <= 0)
+							return;
+						else{
+							var bool = nearest[0][0];
+							//console.log
+							var s = "";
+							var first = true;
+							if(maps[mappos].showPropertiesOnClick != null){
+								for(var i=0; i< maps[mappos].showPropertiesOnClick.length; i+=2){
+										if(first){
+											s+= maps[mappos].showPropertiesOnClick[i+1] + ": " + bool.properties[maps[mappos].showPropertiesOnClick[i]];
+											first=false;
+										}
+										else{
+											s+= "\n" + maps[mappos].showPropertiesOnClick[i+1] + ": " + bool.properties[maps[mappos].showPropertiesOnClick[i]];
+										}
+									
+								}
+							}
+							else{
+							
+								var keys = Object.keys(bool.properties);
+								
+								for(var i=0; i< keys.length; i++){
+									if(keys[i] != "_gisplayid"){
+										if(first){
+											s+= keys[i] + ": " + bool.properties[keys[i]];
+											first=false;
+										}
+										else{
+											s+= "\n" + keys[i] + ": " + bool.properties[keys[i]];
+										}
+									}
+								}
+							}
+							if(maps[mappos].interactive==true)
+								alert(s);
+							if(maps[mappos].mapOnClickCall!= undefined && maps[mappos].mapOnClickCall != null)
+								maps[mappos].mapOnClickCall(bool);
+
+						}
+
+
+					}
+						
+					
+				});
+
+			},			
 
 			fitFeature: function(properties){
 				var result = [];
@@ -1545,7 +1537,7 @@
 				this.alpha = options.alpha!=undefined?options.alpha:0.5;
 				this.interactive = options.interactive==undefined?true:!options.interactive;
 				this.attr = options.attr;
-				this.dynamic = options.dynamic==undefined?false:options.dynamic;
+				this.dynamic = options.memorySaver==undefined?false:!options.memorySaver;
 				this.maxfeatures = options.maxFeatures;
 				this.breaks = options.classBreaks;
 				this.colorscheme = options.colorScheme;
@@ -1619,7 +1611,7 @@
 			
 				gl.disable(gl.BLEND);
 			
-				console.log("fase 1 concluida");
+				//console.log("fase 1 concluida");
 
 				var canvas = document.getElementById('mapCanvas' + this.id);
 				
@@ -1670,7 +1662,7 @@
 
 				gl.disableVertexAttribArray(positionLoc);
 				//defaults to general program
-				console.log("fase 2 concluida");
+				//console.log("fase 2 concluida");
 				gl.bindBuffer(gl.ARRAY_BUFFER, null);
 				this._webgl.gl.useProgram(this._webgl.program);
 			}
