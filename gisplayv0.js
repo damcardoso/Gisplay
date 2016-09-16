@@ -1884,8 +1884,8 @@
 		maps.push(this);
 		this.initialize();
 
-		this.intensity = 0.1;
-		this.pointsize = 0.05;
+		this.intensity = 0.00225;
+		this.pointsize = 0.25;
 		this.addAesthetic(new Aesthetic(0, null, null, 0.1, 0.05, [null,null] ));
 		this.processData(geometry);
 		this.loader();
@@ -1978,8 +1978,16 @@
 */
 
 						var pixel = this.latLongToPixelXY(geojson.features[g].geometry.coordinates[0], geojson.features[g].geometry.coordinates[1]);
-
+						/*
 						tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);	
+					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
+						*/
+
+					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);	
 					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
 					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
 					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
@@ -2075,7 +2083,7 @@
 
 
 
-	 	changemapdefaults: function(defaultid){
+	 	changemapDefaults: function(defaultid){
 	 		var options = {};
 	 		switch(defaultid){
 	 			case 1:
