@@ -55,12 +55,12 @@
 		 	fragmentSourceCode += "\n			float radius = 0.5;";
 		 	fragmentSourceCode += "\n			float centerDist = length(gl_PointCoord - 0.5);";
 			fragmentSourceCode += "\n			float alpha;";
-			fragmentSourceCode += "\n			if (u_color[3] == -1.0){";
-			fragmentSourceCode += "\n				alpha =  v_opacity * step(centerDist, radius);";
-			fragmentSourceCode += "\n			}";
-			fragmentSourceCode += "\n			else{";
+			fragmentSourceCode += "\n			if (u_color[3] == -1.0){";   //unnecessary??
+			fragmentSourceCode += "\n				alpha =  v_opacity * step(centerDist, radius);";//unnecessary??
+			fragmentSourceCode += "\n			}";//unnecessary??
+			fragmentSourceCode += "\n			else{";//unnecessary??
 			fragmentSourceCode += "\n				alpha =  u_color[3] * step(centerDist, radius);";
-			fragmentSourceCode += "\n			}";
+			fragmentSourceCode += "\n			}";//unnecessary??
 			fragmentSourceCode += "\n			if(isPoint == 1.0 ){";
 			fragmentSourceCode += "\n			if (alpha < 0.1) discard;";
 			fragmentSourceCode += "\n				gl_FragColor = vec4(u_color[0], u_color[1], u_color[2], alpha);}";
@@ -303,15 +303,15 @@
 
 		},
 
-		insertProportionalRow: function(currentaes, mapobj, numberof){
+		insertProportionalSymbols: function(currentaes, mapobj, numberof){
 			var row = document.createElement('tr');
 			var value = document.createElement('td');
 			value.colSpan = 2;
 			value.style.textAlign = 'center';
-			var lastdiv;
+			
 			var rgbc = 'rgba('+ currentaes.fillColor[0] +',' + currentaes.fillColor[1] +',' + currentaes.fillColor[2] +  ',' + 1 +')';
 			var strokecolor;
-			var lastdiv;
+			
 			if(currentaes.strokeColor!=null && currentaes!=undefined)
 				strokecolor = 'rgba('+currentaes.strokeColor[0] +',' + currentaes.strokeColor[1] +',' + currentaes.strokeColor[2] +  ',' + currentaes.strokeColor[3] +')';
 			else
@@ -332,13 +332,13 @@
 				colorDiv.style.height = size;
 				colorDiv.style.width = size;
 				current.appendChild(colorDiv);
-				if(i!= (numberof-1)){
-					lastdiv.appendChild(current);
-					lastdiv = colorDiv;
+				if(i!= (numberof-1) && this.lastdiv != undefined){
+					this.lastdiv.appendChild(current);
+					this.lastdiv = colorDiv;
 				}
 				else{
 					value.appendChild(current);
-					lastdiv = colorDiv;
+					this.lastdiv = colorDiv;
 				}
 
 			}
@@ -918,7 +918,7 @@
 								  		return Math.pow(a.lon - b.lon, 2) +  Math.pow(a.lat - b.lat, 2);
 									},
 							["lon", "lat", "properties"]);
-			if(this.type=='CP')
+			if(this.type=='CP' || this.type == 'CM')
 				this.rtree = new PolygonLookup(geojson);
 
 		},
@@ -949,7 +949,7 @@
 		},
 
 		scaleProjection: function(matrix, scaleX, scaleY) {
-			// scaling x and y, which is just scaling first two columns of matrix
+			// scaling x and y, which is just scaling first two rows of matrix
 			matrix[0] *= scaleX;
 			matrix[1] *= scaleX;
 			matrix[2] *= scaleX;
@@ -962,7 +962,7 @@
 		},
 		
 		translateProjection: function(matrix, tx, ty) {
-			// translation is in last column of matrix
+			// translation is in last row of matrix
 			matrix[12] += matrix[0]*tx + matrix[4]*ty;
 			matrix[13] += matrix[1]*tx + matrix[5]*ty;
 			matrix[14] += matrix[2]*tx + matrix[6]*ty;
@@ -1130,7 +1130,7 @@
 				if (gl == null) return;
 				var matrixProjection = new Float32Array(16);
 
-				//TODO: RS uncomment these two lines
+				
 				//gl.clear(gl.COLOR_BUFFER_BIT);
 				//gl.disable(gl.DEPTH_TEST);
 
@@ -1348,7 +1348,7 @@
 				var fsize = Float32Array.BYTES_PER_ELEMENT;
 				//console.log("Numero de Buffers: ", buffers.length);
 
-				gl.uniform4f(vertexColorLocation, aes.fillColor[0], aes.fillColor[1], aes.fillColor[2], aes.fillColor[3]);
+				gl.uniform4f(vertexColorLocation, aes.fillColor[0]/255, aes.fillColor[1]/255, aes.fillColor[2]/255, this.alpha);
 				
 
 
@@ -1678,7 +1678,7 @@
 	function Choropleth(bgmap, geometry, options){
 		this.geometry = geometry;
 		this.aesthetics = new Array();
-		this.annotations = new Array();
+		this.geometry = geometry;
 		this.loadOptions(options, bgmap);
 		this.id=mapcount++;
 		this.type='CP';
@@ -1714,7 +1714,23 @@
 				}
 				this.legend.insertLegend(this.map);
 			}
-		}
+		},
+
+		defaults: {
+
+			value: function(defaultid){
+		 		var options = {};
+		 		switch(defaultid){
+		 			case 1:
+		 				options.colorScheme = ['white','yellow','orange','red'];
+		 				options.numberOfClasses = 4;
+		 				break;
+		 			default:
+		 					break;
+		 		}
+		 		return options;
+		 	}
+	 	}
 
 	});
 
@@ -1725,7 +1741,6 @@
 	function DotMap(bgmap,geometry, options){
 		this.geometry = geometry;
 		this.aesthetics = new Array();
-		this.annotations = new Array();
 		this.type = 'DM';
 		this.loadOptions(options, bgmap);
 		this.id=mapcount++;
@@ -1740,7 +1755,6 @@
 
 	 	draw: {
 	 		value: function(){
-				//var time = Date.now();
 				this.clear();
 				for(var i = 0; i<this.aesthetics.length; i++){
 					if(this.aesthetics[i].enabled == true)
@@ -1754,14 +1768,30 @@
 			value: function(){
 				this.legend = new Legend(this.id);
 				for(var a in this.aesthetics){
-
 					this.legend.insertPointRow(this.aesthetics[a], this);
 				}
 				this.legend.insertLegend(this.map);
 			}
-		}
+		},
 
-		
+		defaults: {
+			value: function(defaultid, useroptions){
+		 		var options = {};
+		 		switch(defaultid){
+		 			case 1:
+		 				options.colorScheme = ["#440154","#440256","#450457","#450559","#46075a","#46085c","#460a5d","#460b5e","#470d60","#470e61","#471063","#471164","#471365","#481467","#481668","#481769","#48186a","#481a6c","#481b6d","#481c6e","#481d6f","#481f70","#482071","#482173","#482374","#482475","#482576","#482677","#482878","#482979","#472a7a","#472c7a","#472d7b","#472e7c","#472f7d","#46307e","#46327e","#46337f","#463480","#453581","#453781","#453882","#443983","#443a83","#443b84","#433d84","#433e85","#423f85","#424086","#424186","#414287","#414487","#404588","#404688","#3f4788","#3f4889","#3e4989","#3e4a89","#3e4c8a","#3d4d8a","#3d4e8a","#3c4f8a","#3c508b","#3b518b","#3b528b","#3a538b","#3a548c","#39558c","#39568c","#38588c","#38598c","#375a8c","#375b8d","#365c8d","#365d8d","#355e8d","#355f8d","#34608d","#34618d","#33628d","#33638d","#32648e","#32658e","#31668e","#31678e","#31688e","#30698e","#306a8e","#2f6b8e","#2f6c8e","#2e6d8e","#2e6e8e","#2e6f8e","#2d708e","#2d718e","#2c718e","#2c728e","#2c738e","#2b748e","#2b758e","#2a768e","#2a778e","#2a788e","#29798e","#297a8e","#297b8e","#287c8e","#287d8e","#277e8e","#277f8e","#27808e","#26818e","#26828e","#26828e","#25838e","#25848e","#25858e","#24868e","#24878e","#23888e","#23898e","#238a8d","#228b8d","#228c8d","#228d8d","#218e8d","#218f8d","#21908d","#21918c","#20928c","#20928c","#20938c","#1f948c","#1f958b","#1f968b","#1f978b","#1f988b","#1f998a","#1f9a8a","#1e9b8a","#1e9c89","#1e9d89","#1f9e89","#1f9f88","#1fa088","#1fa188","#1fa187","#1fa287","#20a386","#20a486","#21a585","#21a685","#22a785","#22a884","#23a983","#24aa83","#25ab82","#25ac82","#26ad81","#27ad81","#28ae80","#29af7f","#2ab07f","#2cb17e","#2db27d","#2eb37c","#2fb47c","#31b57b","#32b67a","#34b679","#35b779","#37b878","#38b977","#3aba76","#3bbb75","#3dbc74","#3fbc73","#40bd72","#42be71","#44bf70","#46c06f","#48c16e","#4ac16d","#4cc26c","#4ec36b","#50c46a","#52c569","#54c568","#56c667","#58c765","#5ac864","#5cc863","#5ec962","#60ca60","#63cb5f","#65cb5e","#67cc5c","#69cd5b","#6ccd5a","#6ece58","#70cf57","#73d056","#75d054","#77d153","#7ad151","#7cd250","#7fd34e","#81d34d","#84d44b","#86d549","#89d548","#8bd646","#8ed645","#90d743","#93d741","#95d840","#98d83e","#9bd93c","#9dd93b","#a0da39","#a2da37","#a5db36","#a8db34","#aadc32","#addc30","#b0dd2f","#b2dd2d","#b5de2b","#b8de29","#bade28","#bddf26","#c0df25","#c2df23","#c5e021","#c8e020","#cae11f","#cde11d","#d0e11c","#d2e21b","#d5e21a","#d8e219","#dae319","#dde318","#dfe318","#e2e418","#e5e419","#e7e419","#eae51a","#ece51b","#efe51c","#f1e51d","#f4e61e","#f6e620","#f8e621","#fbe723","#fde725"];
+		 				break;
+		 			case 2:
+		 				options.colorScheme = ['purple','orange', 'blue', 'yellow', 'pink', 'green', 'red', 'navy'];
+		 				break;
+		 			default:
+		 				
+		 				break;
+		 		}
+		 		options.numberOfClasses = 1;
+		 		return options;
+	 		}
+	 	},
 
 	 });
 
@@ -1810,13 +1840,33 @@
 		buildLegend: { //override
 			value: function(){
 				this.legend = new Legend(this.id);
+				for(var i = this.aesthetics.length-1; i>=0; i--)
+					this.legend.insertProportionalSymbols(this.aesthetics[i],this,4);
+				this.legend.insertLegend(this.map);
 				/*for(var a in this.aesthetics){
 					this.legend.insertPointRow(this.aesthetics[a], this);
 				}
 				this.legend.insertLegend(this.map);*/
 
 			}
-		}
+		},
+
+		defaults: {
+			value: function(defaultid){
+		 		var options = {};
+		 		switch(defaultid){
+		 			case 1:
+		 			options.maxPointSize = 60;
+		 			options.minPointSize = 5;
+		 			options.colorScheme = ['green', 'red', 'blue'];
+		 			options.numberOfClasses = 1;
+		 				break;
+		 			default:
+		 				break;
+		 		}
+		 		return options;
+		 	}
+		 }
 	 });
 
 
@@ -2038,47 +2088,37 @@
 
 	 Gisplay.prototype = {
 
-	 	makeChoropleth: function(bgmap, geometry, options,defaultid){
-	 		
-	 		var gismap = new Choropleth(bgmap, geometry, options);
+	 	makeMap: function(gismap, defaultid){
 	 		setTimeout(function(){
 		 		defaultid = defaultid != null ? defaultid: 1;
-		 		
-		 			
 		 		if(gismap.colorscheme==undefined)
-		 			gismap.colorscheme = Gisplay.choroplethDefaults(defaultid).colorScheme;
+		 			gismap.colorscheme = gismap.defaults(defaultid).colorScheme;
 		 		if(gismap.classbreaks ==undefined){
 		 			if(gismap.numberofclasses == undefined){
-		 				gismap.numberofclasses = Gisplay.choroplethDefaults(defaultid).numberOfClasses;
+		 				gismap.numberofclasses = gismap.defaults(defaultid).numberOfClasses;
 		 			}
-		 			gismap.preProcessData(geometry, gismap.numberofclasses, gismap.algorithm, gismap.colorscheme);
+		 			gismap.preProcessData(gismap.geometry, gismap.numberofclasses, gismap.algorithm, gismap.colorscheme);
 		 		}
 		 			
-		 		gismap.processData(geometry);
+		 		gismap.processData(gismap.geometry);
 		 		gismap.draw();
 				if(options.legend != false)
 					gismap.buildLegend();
-
 		 		if(options.loader != false){
 		 			gismap.loader();
 		 		}
 		 	},1);
+	 	},
+
+	 	makeChoropleth: function(bgmap, geometry, options,defaultid){
+	 		var gismap = new Choropleth(bgmap, geometry, options);
+	 		this.makeMap(gismap, defaultid);
 
 	 	},
 
-	 	choroplethDefaults: function(defaultid){
-	 		var options = {};
-	 		switch(defaultid){
-	 			case 1:
-	 				options.colorScheme = ['white','yellow','orange','red'];
-	 				options.numberOfClasses = 4;
-	 				break;
-	 			
-	 			default:
-	 				
-	 				break;
-	 		}
-	 		return options;
+	 	makeDotMap: function(bgmap, geometry, options,defaultid){
+	 		var gismap = new DotMap(bgmap, geometry, options);
+	 		this.makeMap(gismap, defaultid);
 	 	},
 
 
@@ -2138,48 +2178,13 @@
 
 	 	makeDotMap: function(bgmap, geometry, options,defaultid){
 	 		var gismap = new DotMap(bgmap, geometry, options);
-	 		setTimeout(function(){
-		 		defaultid = defaultid != null ? defaultid: 1;
-		 		if(gismap.colorscheme==undefined)
-		 			gismap.colorscheme = Gisplay.dotmapDefaults(defaultid, options).colorScheme;
-		 		if(gismap.classbreaks ==undefined){
-		 			if(gismap.numberofclasses == undefined){
-		 				gismap.numberofclasses = Gisplay.dotmapDefaults(defaultid, options).numberOfClasses;
-		 			}
-		 			gismap.preProcessData(geometry, gismap.numberofclasses, gismap.algorithm, gismap.colorscheme);
-		 		}
-		 			
-		 		gismap.processData(geometry);
-		 		gismap.draw();
-				if(options.legend != false)
-					gismap.buildLegend();
-
-		 		if(options.loader != false){
-		 			gismap.loader();
-		 		}
-		 	},1);
-	 	},
-
-	 	dotmapDefaults: function(defaultid, useroptions){
-	 		var options = {};
-	 		switch(defaultid){
-	 			case 1:
-	 				options.colorScheme = ["#440154","#440256","#450457","#450559","#46075a","#46085c","#460a5d","#460b5e","#470d60","#470e61","#471063","#471164","#471365","#481467","#481668","#481769","#48186a","#481a6c","#481b6d","#481c6e","#481d6f","#481f70","#482071","#482173","#482374","#482475","#482576","#482677","#482878","#482979","#472a7a","#472c7a","#472d7b","#472e7c","#472f7d","#46307e","#46327e","#46337f","#463480","#453581","#453781","#453882","#443983","#443a83","#443b84","#433d84","#433e85","#423f85","#424086","#424186","#414287","#414487","#404588","#404688","#3f4788","#3f4889","#3e4989","#3e4a89","#3e4c8a","#3d4d8a","#3d4e8a","#3c4f8a","#3c508b","#3b518b","#3b528b","#3a538b","#3a548c","#39558c","#39568c","#38588c","#38598c","#375a8c","#375b8d","#365c8d","#365d8d","#355e8d","#355f8d","#34608d","#34618d","#33628d","#33638d","#32648e","#32658e","#31668e","#31678e","#31688e","#30698e","#306a8e","#2f6b8e","#2f6c8e","#2e6d8e","#2e6e8e","#2e6f8e","#2d708e","#2d718e","#2c718e","#2c728e","#2c738e","#2b748e","#2b758e","#2a768e","#2a778e","#2a788e","#29798e","#297a8e","#297b8e","#287c8e","#287d8e","#277e8e","#277f8e","#27808e","#26818e","#26828e","#26828e","#25838e","#25848e","#25858e","#24868e","#24878e","#23888e","#23898e","#238a8d","#228b8d","#228c8d","#228d8d","#218e8d","#218f8d","#21908d","#21918c","#20928c","#20928c","#20938c","#1f948c","#1f958b","#1f968b","#1f978b","#1f988b","#1f998a","#1f9a8a","#1e9b8a","#1e9c89","#1e9d89","#1f9e89","#1f9f88","#1fa088","#1fa188","#1fa187","#1fa287","#20a386","#20a486","#21a585","#21a685","#22a785","#22a884","#23a983","#24aa83","#25ab82","#25ac82","#26ad81","#27ad81","#28ae80","#29af7f","#2ab07f","#2cb17e","#2db27d","#2eb37c","#2fb47c","#31b57b","#32b67a","#34b679","#35b779","#37b878","#38b977","#3aba76","#3bbb75","#3dbc74","#3fbc73","#40bd72","#42be71","#44bf70","#46c06f","#48c16e","#4ac16d","#4cc26c","#4ec36b","#50c46a","#52c569","#54c568","#56c667","#58c765","#5ac864","#5cc863","#5ec962","#60ca60","#63cb5f","#65cb5e","#67cc5c","#69cd5b","#6ccd5a","#6ece58","#70cf57","#73d056","#75d054","#77d153","#7ad151","#7cd250","#7fd34e","#81d34d","#84d44b","#86d549","#89d548","#8bd646","#8ed645","#90d743","#93d741","#95d840","#98d83e","#9bd93c","#9dd93b","#a0da39","#a2da37","#a5db36","#a8db34","#aadc32","#addc30","#b0dd2f","#b2dd2d","#b5de2b","#b8de29","#bade28","#bddf26","#c0df25","#c2df23","#c5e021","#c8e020","#cae11f","#cde11d","#d0e11c","#d2e21b","#d5e21a","#d8e219","#dae319","#dde318","#dfe318","#e2e418","#e5e419","#e7e419","#eae51a","#ece51b","#efe51c","#f1e51d","#f4e61e","#f6e620","#f8e621","#fbe723","#fde725"];
-	 				break;
-	 			case 2:
-	 				options.colorScheme = ['purple','orange', 'blue', 'yellow', 'pink', 'green', 'red', 'navy'];
-	 				break;
-	 			default:
-	 				
-	 				break;
-	 		}
-	 		options.numberOfClasses = 1;
-	 		return options;
+	 		this.makeMap(gismap, defaultid);
 	 	},
 
 	 	makeProportionalSymbolsMap: function(bgmap, geometry, options,defaultid){
 	 		var gismap = new PSymbolsMap(bgmap, geometry, options);
-	 		setTimeout(function(){
+	 		this.makeMap(gismap);
+	 		/*setTimeout(function(){
 		 		defaultid = defaultid != null ? defaultid: 1;
 		 		if(gismap.colorscheme==undefined)
 		 			gismap.colorscheme = Gisplay.psymbolsDefaults(defaultid, options).colorScheme;
@@ -2198,25 +2203,11 @@
 		 		if(options.loader != false){
 		 			gismap.loader();
 		 		}
-		 	},1);
+		 	},1);*/
+
 	 	},
 
-	 	psymbolsDefaults: function(defaultid){
-	 		var options = {};
-	 		switch(defaultid){
-	 			case 1:
-	 			options.maxPointSize = 60;
-	 			options.minPointSize = 5;
-	 			options.colorScheme = ['green', 'red', 'blue'];
-	 			options.numberOfClasses = 1;
-	 				break;
-	 			
-	 			default:
-	 				
-	 				break;
-	 		}
-	 		return options;
-	 	},
+	 	
 
 	 	validateOptions: function(maptype, options){
 
