@@ -68,7 +68,7 @@
 			fragmentSourceCode += "\n				gl_FragColor = vec4(u_color[0], u_color[1], u_color[2], u_color[3]);";
 		 	fragmentSourceCode += "\n		}";
 
-
+		 	/*
 		var heatmapVertex0 = 'attribute vec4 position, intensity; attribute vec2 delta; attribute float aPointSize; uniform mat4 projection; varying vec2 off, dim; varying float vIntensity; void main() {vIntensity = intensity.x; \n \n dim = abs(delta); \n off = delta; \n vec4 mypos = (projection * position);  \n vec2 pos = mypos.xy + delta; \n gl_Position = vec4(pos,0,1);';
 			heatmapVertex0 += ' \n gl_PointSize = aPointSize;';
 			heatmapVertex0 +=' \n }';
@@ -82,8 +82,9 @@
 		var getColorFun1 = 'vec3 getColor(float intensity){\n    vec3 blue = vec3(0.0, 0.0, 1.0);\n    vec3 cyan = vec3(0.0, 1.0, 1.0);\n    vec3 green = vec3(0.0, 1.0, 0.0);\n    vec3 yellow = vec3(1.0, 1.0, 0.0);\n    vec3 red = vec3(1.0, 0.0, 0.0);\n\n    vec3 color = (\n        fade(-0.25, 0.25, intensity)*blue +\n        fade(0.0, 0.5, intensity)*cyan +\n        fade(0.25, 0.75, intensity)*green +\n        fade(0.5, 1.0, intensity)*yellow +\n        smoothstep(0.75, 1.0, intensity)*red\n    );\n    return color;\n}';
 		var output1 = " vec4 alphaFun(vec3 color, float intensity){\n    float alpha = smoothstep(0.0, 1.0, intensity);\n    return vec4(color*alpha, alpha);\n}";
 		var heatmapFragment1 = '#ifdef GL_FRAGMENT_PRECISION_HIGH\n    precision highp int;\n    precision highp float;\n#else\n    precision mediump int;\n    precision mediump float;\n#endif\n uniform sampler2D source; varying vec2 texcoord; \n  float fade(float low, float high, float value){\n    float mid = (low+high)*0.5;\n    float range = (high-low)*0.5;\n  highp float x = 1.0 - clamp(abs(mid-value)/range, 0.0, 1.0);\n    return smoothstep(0.0, 1.0, x);\n}\n\n' + getColorFun1 + "\n" + output1 +  ' \n void main(){\n    vec4 color = texture2D(source, texcoord); \n float intensity = smoothstep(0.0, 1.0, texture2D(source, texcoord).w); \n  \n gl_FragColor = vec4(alphaFun(getColor(intensity), intensity));\n}';
-		
-		return {vertex: vertexSourceCode, fragment: fragmentSourceCode, heatmapVertex0: heatmapVertex0, heatmapFragment0: heatmapFragment0, heatmapVertex1: heatmapVertex1, heatmapFragment1: heatmapFragment1};
+		*/
+		//return {vertex: vertexSourceCode, fragment: fragmentSourceCode, heatmapVertex0: heatmapVertex0, heatmapFragment0: heatmapFragment0, heatmapVertex1: heatmapVertex1, heatmapFragment1: heatmapFragment1};
+		return {vertex: vertexSourceCode, fragment: fragmentSourceCode};
 	}
 
 
@@ -254,6 +255,8 @@
 
 
 			row.onclick = function(){
+				if(Gisplay.profiling==true)
+					var start = Date.now();
 				if(mapobj.legendToggle != false){
 					var toFade = !currentaes.enableDisable();
 					if(toFade==true){
@@ -263,8 +266,13 @@
 						this.className = this.className.replace( /(?:^|\s)_gisplayfade(?!\S)/g , '' );
 					}
 				}
-				mapobj.legendOnClickCall(currentaes);
+				if(mapobj.legendOnClickCall != null && mapobj.legendOnClickCall !=undefined)
+					mapobj.legendOnClickCall(currentaes);
 				mapobj.draw();
+				if(Gisplay.profiling==true){
+						var end = Date.now();
+						window.console.log("Tempo de processamento de filtragem pela legenda (segundos): " +(end-start)/1000);
+				}
 				
 			};
 
@@ -474,7 +482,7 @@
 
 			this._webgl.gl.linkProgram(this._webgl.program);
 			this._webgl.gl.useProgram(this._webgl.program);
-			
+			/*
 			var heatmapVertex0 = shader(this._webgl.gl.VERTEX_SHADER, source_code.heatmapVertex0, this._webgl);
 			var heatmapFragment0 = shader(this._webgl.gl.FRAGMENT_SHADER, source_code.heatmapFragment0, this._webgl);
 
@@ -488,7 +496,7 @@
 			this._webgl.gl.attachShader(this._webgl.heatmapProgram[1], heatmapVertex1);
 			this._webgl.gl.attachShader(this._webgl.heatmapProgram[1], heatmapFragment1);
 			this._webgl.gl.linkProgram(this._webgl.heatmapProgram[1]);
-			
+			*/
 		},
 
 
@@ -775,12 +783,12 @@
 
 			for(var g = 0; g<geojson.features.length && (this.maxfeatures ==undefined || g<this.maxfeatures); g++)
 			 {
-			 	var properties = geojson.features[g].properties;
+			 	
 			 	geojson.features[g].properties['_gisplayid'] = g;
-				if(this.minued != undefined && this.subtrahend != undefined && typeof geojson.features[g].properties[this.minuend] == 'number' && geojson.features[g].properties[this.minuend] != null && typeof geojson.features[g].properties[this.subtrahend] == 'number' && geojson.features[g].properties[this.subtrahend] != null){
-					geojson.features[g].properties['change'] = geojson.features[g].properties[this.minuend] - geojson.features[g].properties[this.subtrahend];
+				if(this.minuend != undefined && this.subtrahend != undefined && typeof geojson.features[g].properties[this.minuend] == 'number' && geojson.features[g].properties[this.subtrahend] != undefined && typeof geojson.features[g].properties[this.subtrahend] == 'number' && geojson.features[g].properties[this.subtrahend] != undefined){
+					geojson.features[g].properties[this.attr] = geojson.features[g].properties[this.minuend] - geojson.features[g].properties[this.subtrahend];
 				}			 	
-
+				var properties = geojson.features[g].properties;
 
 			 	if(geojson.features[g].geometry.type == "Polygon" || geojson.features[g].geometry.type == "MultiPolygon"){
 				 	var polygons = this.processPolygon(geojson.features[g]);
@@ -1275,21 +1283,26 @@
 
 
 				for (var i = 0; i < aes._features.length; i++) {
-					for(var y = 0; y<aes._features[i]._triangles.length; y++){
-						var color;
-						var diff = aes._features[i]._properties['change'];
-						if(diff == 0)
-							color = aes.fillColor(0.5);
-						else{
-							if(diff>0){
-								color = aes.fillColor(0.5 + diff/this.max/2);
-							}else{
-								color = aes.fillColor(0.5 - diff/this.min/2);
-							}
+					var ucolor;
+					var color;
+					var diff = aes._features[i]._properties[this.attr];
+					if(diff == 0)
+						color = aes.fillColor(0.5).rgb();
+					else{
+						if(diff>0){
+							color = aes.fillColor(0.5 + diff/this.max/2).rgb();
+							
+
+						}else{
+							color = aes.fillColor(0.5 - diff/this.min/2).rgb();
 						}
 
-
-						gl.uniform4f(vertexColorLocation, color[0]/255, color[1]/255, color[2]/255, this.alpha);
+					}
+					ucolor = [Math.round(color[0]), Math.round(color[1]), Math.round(color[2]), this.alpha];
+					
+					gl.uniform4f(vertexColorLocation, ucolor[0]/255, ucolor[1]/255, ucolor[2]/255, this.alpha);
+					for(var y = 0; y<aes._features[i]._triangles.length; y++){
+						
 					 	gl.bindBuffer(gl.ARRAY_BUFFER, aes._features[i]._triangles[y]);
 				
 						gl.enableVertexAttribArray(vertexCoordLocation);
@@ -1397,7 +1410,13 @@
 						mappos = i;
 				this.map.onEvent('move', 
 					function() {
+						if(Gisplay.profiling==true)
+							var start = Date.now();
 						maps[mappos].draw();
+						if(Gisplay.profiling==true){
+							var end = Date.now();
+							window.console.log("Tempo de processamento de Zoom/Pan (segundos):"+ (end-start)/1000);
+						}
 					}
 				);
 
@@ -1409,6 +1428,8 @@
 			setupOnclick: function(mappos){
 					
 				maps[mappos].map.onEvent('click', function (e) {
+					if(Gisplay.profiling==true)
+						var start = Date.now();
 					var lat = e.latlng.lat;
 					var lon = e.latlng.lng;
 
@@ -1502,7 +1523,10 @@
 
 					}
 						
-					
+					if(Gisplay.profiling==true){
+						var end = Date.now();
+						window.console.log("Tempo de processamento de um click (segundos): " +(end-start)/1000);
+					}
 				});
 
 			},			
@@ -1545,7 +1569,8 @@
 				this.algorithm = options.classBreaksMethod;
 				this.legendOnClickCall = options.legendOnClickFunction;
 				this.mapOnClickCall = options.mapOnClickFunction;
-				
+				this.minuend = options.minuend;
+				this.subtrahend = options.subtrahend;
 
 			},
 
@@ -1676,7 +1701,6 @@
 
 	
 	function Choropleth(bgmap, geometry, options){
-		this.geometry = geometry;
 		this.aesthetics = new Array();
 		this.geometry = geometry;
 		this.loadOptions(options, bgmap);
@@ -1873,9 +1897,10 @@
 	 function ChangeMap(bgmap, geometry, options){
 		this.geometry = geometry;
 		this.aesthetics = new Array();
-		this.annotations = new Array();
+		this.attr = "change";
 		this.loadOptions(options, bgmap);
 		this.id=mapcount++;
+		this.attr = "change";
 		this.type='CM';
 		maps.push(this);
 		this.initialize();	
@@ -1911,13 +1936,20 @@
 				}
 				breaks = [this.min,this.max];
 				fcolor = chroma.scale(colorscheme);
-				var aes = new Aesthetic(i, this.attr, fcolor, [0,0,0,1], null, [breaks[0], breaks[1]]);
+				var aes = new Aesthetic(0, this.attr, fcolor, [0,0,0,1], null, [breaks[0], breaks[1]]);
 				aes.outer = true;
 				aesarray.push(aes);
 
 				this.aesthetics = aesarray;
 
 
+			}
+		},
+
+		defaults: {
+			value: function(){
+				var options = {};
+				return options;
 			}
 		}
 
@@ -2083,13 +2115,48 @@
 
 	
 	 function Gisplay(){
+	 	this.profiling = true;
 	 	return this;
 	 };
 
 	 Gisplay.prototype = {
 
+	 	makeChoropleth: function(bgmap, geometry, options,defaultid){
+	 		if(Gisplay.profiling == true)
+	 			this.startTimeStamp = Date.now();
+ 			var gismap = new Choropleth(bgmap, geometry, options);
+ 			this.makeMap(gismap, defaultid);
+ 			
+	 	},
+
+	 	makeDotMap: function(bgmap, geometry, options,defaultid){
+	 		if(Gisplay.profiling == true)
+	 			this.startTimeStamp = Date.now();
+	 		var gismap = new DotMap(bgmap, geometry, options);
+	 		this.makeMap(gismap, defaultid);
+	 	
+	 	},
+
+	 	makeProportionalSymbolsMap: function(bgmap, geometry, options,defaultid){
+	 		if(this.profiling == true)
+	 			this.startTimeStamp = Date.now();
+	 		var gismap = new PSymbolsMap(bgmap, geometry, options);
+	 		this.makeMap(gismap);
+	 	
+	 	},
+
+		makeChangeMap: function(bgmap, geometry, options,defaultid){
+	 		if(this.profiling == true)
+	 			this.startTimeStamp = Date.now();
+	 		var gismap = new ChangeMap(bgmap, geometry, options);
+	 		this.makeMap(gismap, defaultid);
+	 		
+	 	},
+
 	 	makeMap: function(gismap, defaultid){
-	 		setTimeout(function(){
+	 		setTimeout(function(console){
+		 		if(Gisplay.profiling == true == true)
+	 				var start = Date.now();
 		 		defaultid = defaultid != null ? defaultid: 1;
 		 		if(gismap.colorscheme==undefined)
 		 			gismap.colorscheme = gismap.defaults(defaultid).colorScheme;
@@ -2101,25 +2168,30 @@
 		 		}
 		 			
 		 		gismap.processData(gismap.geometry);
+		 		if(Gisplay.profiling == true == true){
+	 				var start2 = Date.now();
+	 				window.console.log("Tempo de processamento do dados (segundos): " + (start2-start)/1000);
+		 		}
 		 		gismap.draw();
+		 		if(Gisplay.profiling == true == true){
+ 					var end = Date.now();
+ 					window.console.log("Tempo de desenho do mapa (segundos): " + (end-start2)/1000);
+ 				}
 				if(options.legend != false)
 					gismap.buildLegend();
 		 		if(options.loader != false){
 		 			gismap.loader();
 		 		}
+		 		if(Gisplay.profiling == true){
+ 					var end = Date.now();
+ 					window.console.log("Tempo total (segundos): " + (end-Gisplay.startTimeStamp)/1000);
+ 			}
+
+
 		 	},1);
 	 	},
 
-	 	makeChoropleth: function(bgmap, geometry, options,defaultid){
-	 		var gismap = new Choropleth(bgmap, geometry, options);
-	 		this.makeMap(gismap, defaultid);
-
-	 	},
-
-	 	makeDotMap: function(bgmap, geometry, options,defaultid){
-	 		var gismap = new DotMap(bgmap, geometry, options);
-	 		this.makeMap(gismap, defaultid);
-	 	},
+	 
 
 
 
@@ -2176,37 +2248,9 @@
 	 	},
 
 
-	 	makeDotMap: function(bgmap, geometry, options,defaultid){
-	 		var gismap = new DotMap(bgmap, geometry, options);
-	 		this.makeMap(gismap, defaultid);
-	 	},
 
-	 	makeProportionalSymbolsMap: function(bgmap, geometry, options,defaultid){
-	 		var gismap = new PSymbolsMap(bgmap, geometry, options);
-	 		this.makeMap(gismap);
-	 		/*setTimeout(function(){
-		 		defaultid = defaultid != null ? defaultid: 1;
-		 		if(gismap.colorscheme==undefined)
-		 			gismap.colorscheme = Gisplay.psymbolsDefaults(defaultid, options).colorScheme;
-		 		if(gismap.classbreaks ==undefined){
-		 			if(gismap.numberofclasses == undefined){
-		 				gismap.numberofclasses = Gisplay.psymbolsDefaults(defaultid, options).numberOfClasses;
-		 			}
-		 			gismap.preProcessData(geometry, gismap.numberofclasses, gismap.algorithm, gismap.colorscheme);
-		 		}
-		 			
-		 		gismap.processData(geometry);
-		 		gismap.draw();
-				if(options.legend != false)
-					gismap.buildLegend();
 
-		 		if(options.loader != false){
-		 			gismap.loader();
-		 		}
-		 	},1);*/
-
-	 	},
-
+	 
 	 	
 
 	 	validateOptions: function(maptype, options){

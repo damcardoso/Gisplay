@@ -46,7 +46,7 @@
 
 
 
-		colorScheme: ["orange","red"]
+		colorScheme: ["green", "red"]
 		//,numberOfClasses: 5
 		//,classBreaksMethod: "quantile"
 		,classBreaks: [0,170,370,760,10760]
@@ -55,16 +55,15 @@
 		maxPointSize: 100
 		,minPointSize: 1
 		,sizeByClass: true
-		,attr: 'f3'
+		//,attr: 'f3'
+		,minuend: 'f6'
+		,subtrahend: 'f2'
 		,dynamic: false
-		,alpha: 0.9
+		,alpha: 1
 		//,interactive: true
 		//,showPropertiesOnClick: ['f1', "State", 'f2', 'County'] //choropleth file
 		//,showPropertiesOnClick: ['f1', "Alcohol", 'f2', 'Victims'] //dot map file
 		,maxFeatures: 5000
-		//,legendOnClickFunction: function(e){alert('test legend');}
-		//,mapOnClickFunction: function(e){alert('test map');}
-
 	};
 
 
@@ -90,7 +89,7 @@
 			var data = JSON.parse(reader.result);
 			//console.log(data);
 			var datareadtimestamp = Date.now();
-			//console.log("tempo de leitura do ficheiro: " + (datareadtimestamp-time)/1000  + " segundos");
+			console.log("tempo de leitura do ficheiro: " + (datareadtimestamp-time)/1000  + " segundos");
 			//rtreetest = new PolygonLookup(data);
 			//var treeinsertstimestamp = Date.now();
 			//console.log("tempo de construção da R-Tree: " + (treeinsertstimestamp-datareadtimestamp)/1000  + " segundos");
@@ -110,9 +109,9 @@
 			maps[0].buildLegend();
 			maps[0].loader();
 */			
-			Gisplay.makeChoropleth(map, data ,options,null);
-			//console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
-			//console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");
+			Gisplay.makeChangeMap(map, data ,options,null);
+			console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
+			console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");
 
 		}
 		reader.readAsText(document.getElementById("file").files[0]);
