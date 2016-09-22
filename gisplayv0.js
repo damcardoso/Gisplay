@@ -1865,7 +1865,7 @@
 			value: function(){
 				this.legend = new Legend(this.id);
 				for(var i = this.aesthetics.length-1; i>=0; i--)
-					this.legend.insertProportionalSymbols(this.aesthetics[i],this,4);
+					this.legend.insertProportionalSymbols(this.aesthetics[i],this,3);
 				this.legend.insertLegend(this.map);
 				/*for(var a in this.aesthetics){
 					this.legend.insertPointRow(this.aesthetics[a], this);
