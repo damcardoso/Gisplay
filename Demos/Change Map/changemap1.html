@@ -32,40 +32,21 @@
 		<script>
 	
 	L.mapbox.accessToken = 'pk.eyJ1IjoibG9sYXNkIiwiYSI6ImNpbmxsZDJkejAwOHR2Zm0yZHVwOWV1ejEifQ.SJ6CupBlW0gPic0n-HgY6w';
+	
+
+
+
 	var map = L.mapbox.map('map', 'mapbox.dark').setView([49.36855556, -81.66371667], 4);
-
 	var options = {
-		//attr: "atributo"
-		//,dynamic: true
-		//colorScheme = [0, cor, 170, cor, 370, cor, 760, cor 10760];
-		//colorScheme = ["red", cor, "green", cor, "blue", cor];
-		
-		//colorScheme = Colors.Divergent
-
-
-
-
-
 		colorScheme: ["green", "red"]
-		//,numberOfClasses: 5
-		//,classBreaksMethod: "quantile"
-		,classBreaks: [0,170,370,760,10760]
-		
-		,customMapService: false,
-		maxPointSize: 100
-		,minPointSize: 1
-		,sizeByClass: true
-		//,attr: 'f3'
+		,customMapService: false
 		,minuend: 'f6'
 		,subtrahend: 'f2'
 		,dynamic: false
 		,alpha: 1
-		//,interactive: true
-		//,showPropertiesOnClick: ['f1', "State", 'f2', 'County'] //choropleth file
-		//,showPropertiesOnClick: ['f1', "Alcohol", 'f2', 'Victims'] //dot map file
-		,maxFeatures: 5000
+		,legendPosition: 'disabled'
 	};
-
+//	Gisplay.makeChangeMap(map, data ,options,null);
 
 
 	

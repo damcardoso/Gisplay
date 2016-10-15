@@ -791,6 +791,7 @@
 				var properties = geojson.features[g].properties;
 
 			 	if(geojson.features[g].geometry.type == "Polygon" || geojson.features[g].geometry.type == "MultiPolygon"){
+				 	this.hasPolygons = true;
 				 	var polygons = this.processPolygon(geojson.features[g]);
 				 	
 				 	var currentBorders = [];
@@ -926,10 +927,173 @@
 								  		return Math.pow(a.lon - b.lon, 2) +  Math.pow(a.lat - b.lat, 2);
 									},
 							["lon", "lat", "properties"]);
-			if(this.type=='CP' || this.type == 'CM')
+			if(this.hasPolygons == true)
 				this.rtree = new PolygonLookup(geojson);
 
 		},
+
+
+		createAndInsertFeature: function(id, geometry, properties){
+			var gl = this._webgl.gl;
+			if(this.minuend != undefined && this.subtrahend != undefined && typeof properties[this.minuend] == 'number' 
+			&& properties[this.subtrahend] != undefined && typeof properties[this.subtrahend] == 'number' 
+			&& properties[this.subtrahend] != undefined){
+				properties[this.attr] = properties[this.minuend] - properties[this.subtrahend];
+			}
+
+			if(geometry.type == "Polygon" || geometry.type == "MultiPolygon"){
+			 	this.hasPolygons = true;
+			 	var polygons = this.processPolygon({geometry: geometry, properties: properties});
+			 	
+			 	var currentBorders = [];
+			 	var currentTriangles = [];
+			 	var bufferT = [];
+			 	var bufferB = [];
+
+			 	for(var j = 0; j< polygons.length; j++){
+			 		var trianglespolygon = polygons[j].triangles;
+			 		var border = polygons[j].vertex;
+			 		currentTriangles[j] = new Array();
+			 		currentBorders[j] = new Array();
+					for (var h = 0; h < trianglespolygon.length; h++) {
+			 			var pixel = this.latLongToPixelXY(border[trianglespolygon[h]*2], border[trianglespolygon[h]*2+1]);
+			 			currentTriangles[j].push(pixel.x, pixel.y);	
+
+			 			if(h==trianglespolygon.length-1){
+			 				bufferT.push(gl.createBuffer());
+
+							var vertArray = new Float32Array(currentTriangles[j]);
+
+							gl.fsize = vertArray.BYTES_PER_ELEMENT;
+							gl.bindBuffer(gl.ARRAY_BUFFER, bufferT[j]);
+							gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
+
+							bufferT[j].itemSize=2;
+							bufferT[j].numItems=vertArray.length/2;
+			 			}
+			 		}
+
+
+			 		for(var y = 0; y < border.length; y+=2){
+			 			var pixel = this.latLongToPixelXY(border[y], border[y+1]);
+			 			currentBorders[j].push(pixel.x, pixel.y);	
+
+			 			if(y==border.length-2){
+			 				bufferB.push(gl.createBuffer());
+
+							var vertArray = new Float32Array(currentBorders[j]);
+
+							gl.fsize = vertArray.BYTES_PER_ELEMENT;
+							gl.bindBuffer(gl.ARRAY_BUFFER, bufferB[j]);
+							gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
+
+							bufferB[j].itemSize=2;
+							bufferB[j].numItems=vertArray.length/2;
+			 			}
+			 		}
+
+			 	}
+			 	//polygon
+			 	this.insertFeature(id, properties, bufferT, bufferB, []);
+
+			}
+
+			else if(geometry.type == "Point" && this.dynamic==true){
+				//dum
+				var currentPoints = []
+				currentPoints[0] = new Array();
+			 	var pixel = this.latLongToPixelXY(geometry.coordinates[0], geometry.coordinates[1]);
+			 	currentPoints[0].push(pixel.x, pixel.y);	
+			 	var bufferP = [];
+			 	bufferP.push(gl.createBuffer());
+
+				var vertArray = new Float32Array(currentPoints[0]);
+				
+				gl.fsize = vertArray.BYTES_PER_ELEMENT;
+				gl.bindBuffer(gl.ARRAY_BUFFER, bufferP[0]);
+				gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
+
+				bufferP[0].itemSize=2;
+				bufferP[0].numItems=vertArray.length/2;
+
+				this.insertFeature(id, properties, [], [], bufferP);
+
+				if(this.treepoints==null || this.treepoints== undefined) this.treepoints = [];
+				this.treepoints.push({lon:geometry.coordinates[0], lat:geometry.coordinates[1], properties:properties});
+
+
+			}
+
+			else if(geometry.type == "Point" && this.dynamic==false){
+				//debugger;
+			 	var pixel = this.latLongToPixelXY(geometry.coordinates[0], geometry.coordinates[1]);
+				if(this.tempPoints==null || this.tempPoints == undefined){
+					this.tempPoints = new Array();
+					for(var a=0; a<this.aesthetics.length; a++){
+						this.tempPoints[a]=[];
+					}
+				}
+
+				var aesarrays = this.fitFeature(properties);
+				for(var y = 0; y<aesarrays.length; y++){
+					this.tempPoints[aesarrays[y]].push(pixel.x, pixel.y);
+				}
+
+				if(this.treepoints==null) this.treepoints = [];
+				this.treepoints.push({lon:geometry.coordinates[0], lat:geometry.coordinates[1], properties:properties});
+
+
+			}
+		 
+
+		},
+
+		buildTrees: function(geojson){
+			var gl = this._webgl.gl;
+			if(this.tempPoints!=null){
+				for(var t=0; t<this.tempPoints.length;t++){
+					if(this.tempPoints[t].length>0){
+						var bufferP = [];
+					 	bufferP.push(gl.createBuffer());
+
+						var vertArray = new Float32Array(this.tempPoints[t]);
+						
+						gl.fsize = vertArray.BYTES_PER_ELEMENT;
+						gl.bindBuffer(gl.ARRAY_BUFFER, bufferP[0]);
+						gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
+
+						bufferP[0].itemSize=2;
+						bufferP[0].numItems=vertArray.length/2;
+						this.insertGroupedFeature(t, [],[], bufferP);
+					}
+				}
+				
+			}
+			if(this.treepoints!=null)
+				this.kdtree = new kdTree(this.treepoints, function(a, b){
+								  		return Math.pow(a.lon - b.lon, 2) +  Math.pow(a.lat - b.lat, 2);
+									},
+							["lon", "lat", "properties"]);
+			if(this.hasPolygons == true)
+				this.rtree = new PolygonLookup(geojson);
+
+		},
+
+		loadGeoJSON: function(geojson){
+			for(var g = 0; g<geojson.features.length && (this.maxfeatures ==undefined || g<this.maxfeatures); g++)
+			 {
+			 	geojson.features[g].properties['_gisplayid'] = g;
+			 	var geometry = geojson.features[g].geometry;
+				var properties = geojson.features[g].properties;
+				this.createAndInsertFeature(g, geometry, properties);
+			}
+			this.buildTrees(geojson);
+
+		},
+
+
+
+
 
 		createCanvas: function(){
 			var canvas = this.map.createCanvas(this.id);
@@ -2167,7 +2331,8 @@
 		 			gismap.preProcessData(gismap.geometry, gismap.numberofclasses, gismap.algorithm, gismap.colorscheme);
 		 		}
 		 			
-		 		gismap.processData(gismap.geometry);
+		 		//gismap.processData(gismap.geometry);
+		 		gismap.loadGeoJSON(gismap.geometry);
 		 		if(Gisplay.profiling == true == true){
 	 				var start2 = Date.now();
 	 				window.console.log("Tempo de processamento do dados (segundos): " + (start2-start)/1000);
