@@ -1722,7 +1722,7 @@
 				else if(options.showPropertiesOnClick!=undefined){
 					this.showPropertiesOnClick = options.showPropertiesOnClick;
 				}
-				this.alpha = options.alpha!=undefined?options.alpha:0.5;
+				this.alpha = options.alpha!=undefined?options.alpha:0.8;
 				this.interactive = options.interactive==undefined?true:!options.interactive;
 				this.attr = options.attr;
 				this.dynamic = options.memorySaver==undefined?false:!options.memorySaver;

@@ -30,17 +30,25 @@
 		<script>
 	
 	L.mapbox.accessToken = 'pk.eyJ1IjoibG9sYXNkIiwiYSI6ImNpbmxsZDJkejAwOHR2Zm0yZHVwOWV1ejEifQ.SJ6CupBlW0gPic0n-HgY6w';
+	
+
+
 	var map = L.mapbox.map('map', 'mapbox.dark').setView([49.36855556, -81.66371667], 4);
 
 	var options = {
-		
+		colorScheme: ["blue", "red"],
 		maxPointSize: 100
-		,minPointSize: 5
-		,sizeByClass: false
-		,attr: 'f1'
-		,alpha: 1.0
+		,numberOfClasses: 2
+		,classBreaksMethod: "k-means"
+		,minPointSize: 1
+		,attr: 'f2'
+		,memorySaver: true
 	};
-	Gisplay.makeProportionalSymbolsMap(map, data, options);
+	//Gisplay.makeDotMap(map, data ,options,null);
+
+
+
+
 
 
 
@@ -64,11 +72,9 @@
 			
 		
 		
-			Gisplay.makeProportionalSymbolsMap(map, data ,options,null);
-			
-
-			/*console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
-			console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");*/
+			Gisplay.makeDotMap(map, data ,options,null);
+			console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
+			console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");
 
 		}
 		reader.readAsText(document.getElementById("file").files[0]);
