@@ -35,13 +35,25 @@
 	var map = L.mapbox.map('map', 'mapbox.streets').setView([49.36855556, -81.66371667], 4);
 
 	var options = {
-		//colorScheme: ["orange","red"]
-		//,classBreaks: [0,170,370,760,10760]
-		attr: 'f3',
-		alpha: 1
+		colorScheme: ["red", "blue"]
+		//,numberOfClasses: 5
+		//,classBreaksMethod: "quantile"
+		,classBreaks: [0,170,370,760,10760]
+		
+		,customMapService: false,
+		maxPointSize: 100
+		,minPointSize: 1
+		,sizeByClass: true
+		,attr: 'f3'
+		,dynamic: false
+		,legendTitle: 'Fatals'
+		//,interactive: true
+		//,showPropertiesOnClick: ['f1', "State", 'f2', 'County'] //choropleth file
+		//,showPropertiesOnClick: ['f1', "Alcohol", 'f2', 'Victims'] //dot map file
+		,maxFeatures: 5000
 	};
 
-	//Gisplay.makeChoropleth(map, data ,options);
+
 
 	
 
@@ -64,7 +76,7 @@
 			var data = JSON.parse(reader.result);
 			//console.log(data);
 			var datareadtimestamp = Date.now();
-			//console.log("tempo de leitura do ficheiro: " + (datareadtimestamp-time)/1000  + " segundos");
+			console.log("tempo de leitura do ficheiro: " + (datareadtimestamp-time)/1000  + " segundos");
 			//rtreetest = new PolygonLookup(data);
 			//var treeinsertstimestamp = Date.now();
 			//console.log("tempo de construção da R-Tree: " + (treeinsertstimestamp-datareadtimestamp)/1000  + " segundos");
@@ -85,8 +97,8 @@
 			maps[0].loader();
 */			
 			Gisplay.makeChoropleth(map, data ,options,null);
-			//console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
-			//console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");
+			console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
+			console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");
 
 		}
 		reader.readAsText(document.getElementById("file").files[0]);

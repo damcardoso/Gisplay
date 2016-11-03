@@ -362,6 +362,7 @@
 			this.table.appendChild(thvalue);
 			var titlerow = document.createElement('tr');
 			var titletd = document.createElement('td');
+			titletd.colSpan = 2;
 			titletd.style.textAlign= 'center';
 			var titletext = document.createTextNode(this.title);
 			titletd.appendChild(titletext);
