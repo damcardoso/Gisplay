@@ -185,7 +185,8 @@
 
 
 
-	function Legend(id){
+	function Legend(id, title){
+		this.title = title;
 		this.init(id);
 		return this;
 	};
@@ -281,8 +282,59 @@
 		},
 
 
-		insertGradient: function(aesarray){
+		insertGradient: function(mapobj, left, middle, right){
+			var row = document.createElement('tr');
+			var value = document.createElement('td');
+			var valueDiv = document.createElement('div');
+			value.colSpan = 2;
+			value.style.textAlign = 'center';
+			var numberof=5;
+			if(mapobj.aesthetics.length > 5)
+				numberof = mapobj.aesthetics.length;
+			var strcolor ='';
+			for(var i =0; i<numberof; i++){
+				var color = mapobj.fcolor(i/numberof).rgb();
+				strcolor += ','+ 'rgba('+ Math.round(color[0])+ ',' + Math.round(color[1]) +',' + Math.round(color[2])+ ',' + mapobj.alpha +')';
+			}
+			strcolor += ') ';
+			valueDiv.style.background = '-webkit-linear-gradient(left' + strcolor;
+			console.log('-webkit-linear-gradient(left' + strcolor);
+			valueDiv.style.height = 25;//(mapCanvas.height / 10);
+			valueDiv.style.width = 130;//(mapCanvas.width / 10);
 
+			var row2 = document.createElement('tr');
+			var value2 = document.createElement('td');
+			value2.colSpan=2;
+
+			var divleft = document.createElement('div');
+			divleft.style.textAlign = 'left';
+			divleft.style.width = '33%';
+			divleft.style.display = "inline-block";
+			var lefttext = document.createTextNode(left);
+			var divmid = document.createElement('div');
+			divmid.style.textAlign = 'center';
+			divmid.style.width = '33%';
+			divmid.style.display = "inline-block";
+			var text = document.createTextNode(middle);
+			var divright = document.createElement('div');
+			divright.style.textAlign = 'right';
+			divright.style.width = '33%';
+			divright.style.display = "inline-block";
+			var righttext = document.createTextNode(right);
+
+
+
+			divleft.appendChild(lefttext);
+			divmid.appendChild(text);
+			divright.appendChild(righttext);
+			value2.appendChild(divleft);
+			value2.appendChild(divmid);
+			value2.appendChild(divright);
+			value.appendChild(valueDiv);
+			row2.appendChild(value2);
+			row.appendChild(value);
+			this.table.appendChild(row);
+			this.table.appendChild(row2);
 		},
 
 		init: function(id,classname){
@@ -308,6 +360,13 @@
 			//thcolor.style.width = 100;
 			this.table.appendChild(thcolor);
 			this.table.appendChild(thvalue);
+			var titlerow = document.createElement('tr');
+			var titletd = document.createElement('td');
+			titletd.style.textAlign= 'center';
+			var titletext = document.createTextNode(this.title);
+			titletd.appendChild(titletext);
+			titlerow.appendChild(titletd);
+			this.table.appendChild(titlerow);
 
 		},
 
@@ -1738,6 +1797,7 @@
 				this.mapOnClickCall = options.mapOnClickFunction;
 				this.minuend = options.minuend;
 				this.subtrahend = options.subtrahend;
+				this.legendTitle = options.legendTitle!=undefined?options.legendTitle:(this.attr!=undefined?this.attr:this.minuend + ' - ' + this.subtrahend);
 
 			},
 
@@ -1899,7 +1959,7 @@
 		},
 		buildLegend: { //override
 			value: function(){
-				this.legend = new Legend(this.id);
+				this.legend = new Legend(this.id, this.legendTitle);
 				for(var a in this.aesthetics){
 					this.legend.insertPolygonRow(this.aesthetics[a], this);
 				}
@@ -1957,7 +2017,7 @@
 
 		buildLegend: { //override
 			value: function(){
-				this.legend = new Legend(this.id);
+				this.legend = new Legend(this.id, this.legendTitle);
 				for(var a in this.aesthetics){
 					this.legend.insertPointRow(this.aesthetics[a], this);
 				}
@@ -2030,7 +2090,7 @@
 
 		buildLegend: { //override
 			value: function(){
-				this.legend = new Legend(this.id);
+				this.legend = new Legend(this.id, this.legendTitle);
 				for(var i = this.aesthetics.length-1; i>=0; i--)
 					this.legend.insertProportionalSymbols(this.aesthetics[i],this,3);
 				this.legend.insertLegend(this.map);
@@ -2094,7 +2154,7 @@
 				var aesarray = [];
 				var values = [];
 				var breaks;
-				var fcolor;
+				//var fcolor;
 				for(var g = 0; g<geojson.features.length && (this.maxfeatures ==undefined || g<this.maxfeatures); g++){
 					if(typeof geojson.features[g].properties[this.minuend] == 'number' && geojson.features[g].properties[this.minuend] != null && typeof geojson.features[g].properties[this.subtrahend] == 'number' && geojson.features[g].properties[this.subtrahend] != null){
 						this.max = Math.max(this.max, geojson.features[g].properties[this.minuend] - geojson.features[g].properties[this.subtrahend]);
@@ -2102,14 +2162,22 @@
 					}
 				}
 				breaks = [this.min,this.max];
-				fcolor = chroma.scale(colorscheme);
-				var aes = new Aesthetic(0, this.attr, fcolor, [0,0,0,1], null, [breaks[0], breaks[1]]);
+				this.fcolor = chroma.scale(colorscheme);
+				var aes = new Aesthetic(0, this.attr, this.fcolor, [0,0,0,1], null, [breaks[0], breaks[1]]);
 				aes.outer = true;
 				aesarray.push(aes);
 
 				this.aesthetics = aesarray;
 
 
+			}
+		},
+
+		buildLegend: {
+			value: function(){
+				this.legend = new Legend(this.id, this.legendTitle);
+				this.legend.insertGradient(this, this.min, 0, this.max);
+				this.legend.insertLegend(this.map);
 			}
 		},
 
@@ -2121,163 +2189,6 @@
 		}
 
 	 });
-
-
-	 function HeatMap(bgmap, geometry, options){
-	 	this.geometry = geometry;
-		this.aesthetics = new Array();
-		this.annotations = new Array();
-		this.type = 'HM';
-		this.loadOptions(options, bgmap);
-		this.id=mapcount++;
-		maps.push(this);
-		this.initialize();
-
-		this.intensity = 0.00225;
-		this.pointsize = 0.25;
-		this.addAesthetic(new Aesthetic(0, null, null, 0.1, 0.05, [null,null] ));
-		this.processData(geometry);
-		this.loader();
-
-		this.draw();
-
-
-		return this;
-	 };
-
-	 HeatMap.prototype = Object.create(Map.prototype,{
-
-	 	draw: {
-	 		value: function(){
-				this.clear();
-				for(var i = 0; i<this.aesthetics.length; i++){
-					if(this.aesthetics[i].enabled == true){
-						this.drawHeatPoints(this.aesthetics[i]);
-					}
-				}
-			}
-		},
-
-		buildLegend: {
-			value: function(){
-
-			}
-		},
-
-		processData: {
-			value: function(geojson) {
-			
-			
-			
-				console.log("numero de features: ", geojson.features.length);
-
-				var gl = this._webgl.gl;
-				var tempPoints = [];
-				tempPoints[0] = new Array();
-
-				for(var g = 0; g<geojson.features.length && (this.maxfeatures ==undefined || g<this.maxfeatures); g++)
-				{
-				 	var properties = geojson.features[g].properties;
-				 	geojson.features[g].properties['_gisplayid'] = g;
-							 	
-
-
-				 /*	if(geojson.features[g].geometry.type == "Point" && this.dynamic==true){
-						//dum
-						var currentPoints = []
-						currentPoints[0] = new Array();
-					 	var pixel = this.latLongToPixelXY(geojson.features[g].geometry.coordinates[0], geojson.features[g].geometry.coordinates[1]);
-					 	//6 insertions
-					 	currentPoints[0].push(pixel.x, pixel.y, - this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);	
-					 	currentPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	currentPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	currentPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	currentPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	currentPoints[0].push(pixel.x, pixel.y, this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	
-
-
-					 	var bufferP = [];
-					 	bufferP.push(gl.createBuffer());
-
-						var vertArray = new Float32Array(currentPoints[0]);
-						
-						gl.fsize = vertArray.BYTES_PER_ELEMENT;
-						gl.bindBuffer(gl.ARRAY_BUFFER, bufferP[0]);
-						gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
-
-						bufferP[0].itemSize=8;
-						bufferP[0].numItems=vertArray.length/8;
-
-						this.insertFeature(g, properties, [], [], bufferP);
-
-
-					}
-
-					else if(geojson.features[g].geometry.type == "Point" && this.dynamic==false){*/
-						//debugger;
-					 	/*
-					 	var pixel = this.latLongToPixelXY(geojson.features[g].geometry.coordinates[0], geojson.features[g].geometry.coordinates[1]);
-						tempPoints[0].push(pixel.x, pixel.y, - aes.pointSize, - aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);	
-					 	tempPoints[0].push(pixel.x, pixel.y, aes.pointSize, - aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);
-					 	tempPoints[0].push(pixel.x, pixel.y, - aes.pointSize, aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);
-					 	tempPoints[0].push(pixel.x, pixel.y, - aes.pointSize, aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);
-					 	tempPoints[0].push(pixel.x, pixel.y, aes.pointSize, - aes.pointSize, aes.strokeColor, aes.strokeColor,aes.strokeColor,aes.strokeColor);
-					 	tempPoints[0].push(pixel.x, pixel.y, aes.pointSize, aes.pointSize, aes.strokeColor, aes.strokeColor, aes.strokeColor, aes.strokeColor);
-*/
-
-						var pixel = this.latLongToPixelXY(geojson.features[g].geometry.coordinates[0], geojson.features[g].geometry.coordinates[1]);
-						/*
-						tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);	
-					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-						*/
-
-					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);	
-					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	tempPoints[0].push(pixel.x, pixel.y, - this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, - this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-					 	tempPoints[0].push(pixel.x, pixel.y, this.pointsize, this.pointsize, this.intensity, this.intensity, this.intensity, this.intensity);
-
-						//}
-				 
-
-				}//end features loop
-				
-
-				//insert grouped points
-				if(tempPoints!=null){
-					for(var t=0; t<tempPoints.length;t++){
-						if(tempPoints[t].length>0){
-							var bufferP = [];
-						 	bufferP.push(gl.createBuffer());
-
-							var vertArray = new Float32Array(tempPoints[t]);
-							
-							gl.fsize = vertArray.BYTES_PER_ELEMENT;
-							gl.bindBuffer(gl.ARRAY_BUFFER, bufferP[0]);
-							gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
-
-							bufferP[0].itemSize=8;
-							bufferP[0].numItems=vertArray.length/8;
-							this.insertGroupedFeature(t, [],[], bufferP);
-						}
-					}
-					
-				}
-				
-			}
-			
-		}
-
-
-	 });
-
-
 
 
 	
