@@ -29,7 +29,7 @@
 	//end general
 
 	//WebGL API
-
+	var _vertexcount = 0;
 
 	function generateShaders(){
 		//general
@@ -716,11 +716,12 @@
 				 		var insidepolygons = [];
 				 		for(var k = 1; k<polygon.geometry.coordinates.length; k++){
 				 			//todo inside polygon
-				 			insidepolygons.push(polygon.geometry.coordinates[i][k]);
+				 			//insidepolygons.push(polygon.geometry.coordinates[i][k]);
 				 		}
 				 		var tempVerts = new Array();
 				 		for(var out = 0; out< outsidepolygon.length-1; out++){
 				 			tempVerts.push(outsidepolygon[out][0], outsidepolygon[out][1]);
+				 			_vertexcount += (outsidepolygon.length+1)/2;
 				 			//console.log("lon: " + outsidepolygon[out][0] + " lat: " + outsidepolygon[out][1]);
 				 		}
 				 		
@@ -745,8 +746,10 @@
 				 			insidepolygons.push(polygon.geometry.coordinates[i][k]);
 				 		}
 				 		var tempVerts = new Array();
+				 		_vertexcount += outsidepolygon.length;
 				 		for(var out = 0; out< outsidepolygon.length-1; out++){
 				 			tempVerts.push(outsidepolygon[out][0], outsidepolygon[out][1]);
+
 				 			//console.log("lon: " + outsidepolygon[out][0] + " lat: " + outsidepolygon[out][1]);
 				 		}
 				 		
