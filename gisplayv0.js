@@ -298,7 +298,7 @@
 			}
 			strcolor += ') ';
 			valueDiv.style.background = '-webkit-linear-gradient(left' + strcolor;
-			console.log('-webkit-linear-gradient(left' + strcolor);
+			
 			valueDiv.style.height = 25;//(mapCanvas.height / 10);
 			valueDiv.style.width = 130;//(mapCanvas.width / 10);
 
@@ -2138,6 +2138,7 @@
 	 ChangeMap.prototype = Object.create(Map.prototype,{
 	 	draw: {
 	 		value: function(){
+	 			var test1 = Date.now();
 				this.clear();
 				for(var i = 0; i<this.aesthetics.length; i++){
 					if(this.aesthetics[i].enabled == true){
@@ -2145,6 +2146,7 @@
 					}
 					this.drawBorders(this.aesthetics[i]);
 				}
+				console.log("test: "+ (Date.now()-test1)/1000);
 			}
 		},
 
@@ -2233,7 +2235,7 @@
 
 	 	makeMap: function(gismap, defaultid){
 	 		setTimeout(function(console){
-		 		if(Gisplay.profiling == true == true)
+		 		if(Gisplay.profiling == true)
 	 				var start = Date.now();
 		 		defaultid = defaultid != null ? defaultid: 1;
 		 		if(gismap.colorscheme==undefined)
@@ -2247,12 +2249,12 @@
 		 			
 		 		//gismap.processData(gismap.geometry);
 		 		gismap.loadGeoJSON(gismap.geometry);
-		 		if(Gisplay.profiling == true == true){
+		 		if(Gisplay.profiling == true){
 	 				var start2 = Date.now();
 	 				window.console.log("Tempo de processamento do dados (segundos): " + (start2-start)/1000);
 		 		}
 		 		gismap.draw();
-		 		if(Gisplay.profiling == true == true){
+		 		if(Gisplay.profiling == true){
  					var end = Date.now();
  					window.console.log("Tempo de desenho do mapa (segundos): " + (end-start2)/1000);
  				}
