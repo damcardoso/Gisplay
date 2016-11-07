@@ -372,10 +372,13 @@
 		},
 
 		insertProportionalSymbols: function(currentaes, mapobj, numberof){
-			var row = document.createElement('tr');
-			var value = document.createElement('td');
-			value.colSpan = 2;
-			value.style.textAlign = 'center';
+			if(this.lastdiv==undefined){
+				var row = document.createElement('tr');
+				var value = document.createElement('td');
+				value.colSpan = 2;
+				value.style.textAlign = 'center';
+				this.firstInsertion = true;
+			}else{this.firstInsertion = false;}
 			
 			var rgbc = 'rgba('+ currentaes.fillColor[0] +',' + currentaes.fillColor[1] +',' + currentaes.fillColor[2] +  ',' + 1 +')';
 			var strokecolor;
@@ -387,7 +390,12 @@
 
 			for(var i =numberof-1; i>=0; i--){
 				var current = document.createElement('div');
-				var propvalue = mapobj.min + i/(numberof-1)*(mapobj.max - mapobj.min);
+				var propvalue;
+				if(this.firstInsertion==false && i==(numberof-1) || numberof==1)
+					propvalue = currentaes.range[1];
+				else
+					propvalue = mapobj.min + i/(numberof-1)*(mapobj.max - mapobj.min);
+				
 				var text = document.createTextNode(round(propvalue));
 				current.appendChild(text);
 				var colorDiv = document.createElement('div');
@@ -396,11 +404,37 @@
 				colorDiv.className = '_gisplayproportionalcircle';
 				colorDiv.style.borderColor = strokecolor;
 				var temppointsize = ((mapobj.maxpointsize - mapobj.minpointsize)/(mapobj.max - mapobj.min))*(propvalue - mapobj.min);
-				var size = Math.max(temppointsize, 5);
+				var size = Math.max(temppointsize, 7.5);
 				colorDiv.style.height = size;
 				colorDiv.style.width = size;
+				colorDiv.style.inherit = false;
+
+				colorDiv.onclick = function(e){
+					if(Gisplay.profiling==true)
+						var start = Date.now();
+					if(mapobj.legendToggle != false){
+						var toFade = !currentaes.enableDisable();
+						if(toFade==true){
+							this.className += " _gisplayfade";
+						}
+						else{
+							this.className = this.className.replace( /(?:^|\s)_gisplayfade(?!\S)/g , '' );
+						}
+					}
+					if(mapobj.legendOnClickCall != null && mapobj.legendOnClickCall !=undefined)
+						mapobj.legendOnClickCall(currentaes);
+					mapobj.draw();
+					if(Gisplay.profiling==true){
+							var end = Date.now();
+							window.console.log("Tempo de processamento de filtragem pela legenda (segundos): " +(end-start)/1000);
+					}
+					if (!e) var e = window.event;
+					e.cancelBubble = true;
+					if(e.stopPropagation) e.stopPropagation();
+					
+				};
 				current.appendChild(colorDiv);
-				if(i!= (numberof-1) && this.lastdiv != undefined){
+				if(/*i!= (numberof-1) &&*/ this.lastdiv != undefined){
 					this.lastdiv.appendChild(current);
 					this.lastdiv = colorDiv;
 				}
@@ -410,8 +444,10 @@
 				}
 
 			}
-			row.appendChild(value);
-			this.table.appendChild(row);
+			if(this.firstInsertion == true){
+				row.appendChild(value);
+				this.table.appendChild(row);
+			}
 
 
 		}
@@ -1606,7 +1642,7 @@
 						 	gl.bindBuffer(gl.ARRAY_BUFFER, aes._features[i]._points[y]);
 						 	var propvalue = parseFloat(aes._features[i]._properties[this.attr]);
 							var temppointsize = ((this.maxpointsize - this.minpointsize)/(this.max - this.min))*(propvalue - this.min);
-							var pointSize = Math.max(currentZoom - 4.0 + temppointsize, temppointsize);
+							var pointSize = Math.max(currentZoom - 4.0 + temppointsize*currentZoom/4, 2);
 							var vertexSizeLocation = gl.getAttribLocation(this._webgl.program, 'aPointSize');
 							gl.vertexAttrib1f(vertexSizeLocation, pointSize);
 							
@@ -1799,7 +1835,7 @@
 				this.minuend = options.minuend;
 				this.subtrahend = options.subtrahend;
 				this.legendTitle = options.legendTitle!=undefined?options.legendTitle:(this.attr!=undefined?this.attr:this.minuend + ' - ' + this.subtrahend);
-
+				this.numberOfLegendItems = options.numberOfLegendItems!=undefined?options.numberOfLegendItems:2;
 			},
 
 			loader: function(){
@@ -1918,6 +1954,16 @@
 				//console.log("fase 2 concluida");
 				gl.bindBuffer(gl.ARRAY_BUFFER, null);
 				this._webgl.gl.useProgram(this._webgl.program);
+			},
+
+			getNumberOfPolygons: function(){
+				var count=0;
+				for(var i=0; i<this.aesthetics.length; i++){
+					for(var z=0; z<this.aesthetics[i]._features.length;z++){
+						count +=this.aesthetics[i]._features[z]._triangles.length;
+					}
+				}
+				return count;
 			}
 
 	};
@@ -2092,8 +2138,13 @@
 		buildLegend: { //override
 			value: function(){
 				this.legend = new Legend(this.id, this.legendTitle);
+				if(this.aesthetics.length==1)
+					this.legend.insertProportionalSymbols(this.aesthetics[0],this.numberOfLegendItems);
 				for(var i = this.aesthetics.length-1; i>=0; i--)
-					this.legend.insertProportionalSymbols(this.aesthetics[i],this,3);
+					if(i==0)
+						this.legend.insertProportionalSymbols(this.aesthetics[i],this,2);
+					else
+						this.legend.insertProportionalSymbols(this.aesthetics[i],this,1);
 				this.legend.insertLegend(this.map);
 				/*for(var a in this.aesthetics){
 					this.legend.insertPointRow(this.aesthetics[a], this);
