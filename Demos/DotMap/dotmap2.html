@@ -8,8 +8,8 @@
 	<style>
 		#map {
 			float: left;
-			width: 95%;
-			height: 95%;
+			width: 55%;
+			height: 55%;
 			position: absolute;
 		}
 
@@ -42,10 +42,9 @@
 		,classBreaksMethod: "k-means"
 		,minPointSize: 1
 		,attr: 'f2'
-		,memorySaver: true
-		,maxFeatures: 100000
+		,legendTitle: "Fatals"
 	};
-	//Gisplay.makeDotMap(map, data ,options,null);
+	
 
 
 
@@ -73,7 +72,7 @@
 			
 		
 		
-			Gisplay.makeDotMap(map, data ,options,null);
+			Gisplay.makeDotMap(map, data ,options);
 			console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
 			console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");
 

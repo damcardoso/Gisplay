@@ -8,8 +8,8 @@
 	<style>
 		#map {
 			float: left;
-			width: 95%;
-			height: 95%;
+			width: 55%;
+			height: 55%;
 			position: absolute;
 		}
 
@@ -30,30 +30,21 @@
 		<script>
 	
 	L.mapbox.accessToken = 'pk.eyJ1IjoibG9sYXNkIiwiYSI6ImNpbmxsZDJkejAwOHR2Zm0yZHVwOWV1ejEifQ.SJ6CupBlW0gPic0n-HgY6w';
-	var map = L.mapbox.map('map', 'mapbox.dark').setView([49.36855556, -81.66371667], 4);
+	
 
-	var options = {
-		//attr: "atributo"
-		//,dynamic: true
-		//colorScheme = [0, cor, 170, cor, 370, cor, 760, cor 10760];
-		//colorScheme = ["red", cor, "green", cor, "blue", cor];
-		
-		
-		colorScheme: ["red", "green"],
-		//numberOfClasses: 2,
-		//,classBreaksMethod: "quantile"
-		//,classBreaks: [0,20,50,80]
-		//,
-		maxPointSize: 100
+
+	var map = L.mapbox.map('map', 'mapbox.dark').setView([49.36855556, -81.66371667], 4);
+	var options = {		
+		colorScheme: ["red", "green"]
 		,minPointSize: 1
 		,sizeByClass: true
-		,attr: 'f1'
-		//,memorySaver: flase
-		//,interactive: true
-		//,showPropertiesOnClick: ['f1', "State", 'f2', 'County'] //choropleth file
-		//,showPropertiesOnClick: ['f1', "Alcohol", 'f2', 'Victims'] //dot map file
-		//,maxFeatures: 5000
+		,attr: 'alcohol'
+		,legendTitle: "Alcohol"
 	};
+	Gisplay.makeDotMap(map, data ,options);
+
+
+
 	
 
 	function start(){
@@ -64,21 +55,9 @@
 		
 		var reader = new FileReader();
 		reader.onloadend = function(){
-			//new Choropleth(map, null,options);
 
 			var data = JSON.parse(reader.result);
-			//console.log(data);
-			var datareadtimestamp = Date.now();
-			console.log("tempo de leitura do ficheiro: " + (datareadtimestamp-time)/1000  + " segundos");
-			//rtreetest = new PolygonLookup(data);
-			//var treeinsertstimestamp = Date.now();
-			//console.log("tempo de construção da R-Tree: " + (treeinsertstimestamp-datareadtimestamp)/1000  + " segundos");
-			
-		
-		
-			Gisplay.makeDotMap(map, data ,options,null);
-			console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
-			console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");
+			Gisplay.makeDotMap(map, data ,options);
 
 		}
 		reader.readAsText(document.getElementById("file").files[0]);

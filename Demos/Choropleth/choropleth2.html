@@ -32,23 +32,14 @@
 		<script>
 	
 	L.mapbox.accessToken = 'pk.eyJ1IjoibG9sYXNkIiwiYSI6ImNpbmxsZDJkejAwOHR2Zm0yZHVwOWV1ejEifQ.SJ6CupBlW0gPic0n-HgY6w';
+	
+
 	var map = L.mapbox.map('map', 'mapbox.streets').setView([49.36855556, -81.66371667], 4);
-
 	var options = {
-		colorScheme: ["blue", "red"]
-		,numberOfClasses: 3
-		//,classBreaksMethod: "k-means"
-		//,classBreaksMethod: "quantile"
-		//,classBreaksMethod: "equidistant"
-		,classBreaks: [0,170,370,760,10760]
-		,attr: 'f3'
-		,dynamic: false
-		//,interactive: true
-		,showPropertiesOnClick: ['f1', "State", 'f2', 'County', 'f3', 'Fatals']
-		//,maxFeatures: 2000
-		
+		attr: 'f2',
+		legendTitle: "Most Frequent Crime"
 	};
-
+	//Gisplay.makeChorochromaticMap(map, data ,options);
 
 
 	
@@ -75,7 +66,7 @@
 			console.log("tempo de leitura do ficheiro: " + (datareadtimestamp-time)/1000  + " segundos");
 
 
-			Gisplay.makeChoropleth(map, data ,options,null);
+			Gisplay.makeChorochromaticMap(map, data ,options);
 			
 		}
 		reader.readAsText(document.getElementById("file").files[0]);

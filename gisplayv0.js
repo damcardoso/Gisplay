@@ -30,6 +30,7 @@
 
 	//WebGL API
 	var _vertexcount = 0;
+	var _tricount = 0;
 
 	function generateShaders(){
 		//general
@@ -68,22 +69,6 @@
 			fragmentSourceCode += "\n				gl_FragColor = vec4(u_color[0], u_color[1], u_color[2], u_color[3]);";
 		 	fragmentSourceCode += "\n		}";
 
-		 	/*
-		var heatmapVertex0 = 'attribute vec4 position, intensity; attribute vec2 delta; attribute float aPointSize; uniform mat4 projection; varying vec2 off, dim; varying float vIntensity; void main() {vIntensity = intensity.x; \n \n dim = abs(delta); \n off = delta; \n vec4 mypos = (projection * position);  \n vec2 pos = mypos.xy + delta; \n gl_Position = vec4(pos,0,1);';
-			heatmapVertex0 += ' \n gl_PointSize = aPointSize;';
-			heatmapVertex0 +=' \n }';
-			
-		var getColorFun = 'vec3 getColor(float intensity){\n    vec3 blue = vec3(0.0, 0.0, 1.0);\n    vec3 cyan = vec3(0.0, 1.0, 1.0);\n    vec3 green = vec3(0.0, 1.0, 0.0);\n    vec3 yellow = vec3(1.0, 1.0, 0.0);\n    vec3 red = vec3(1.0, 0.0, 0.0);\n\n    vec3 color = (\n        fade(-0.25, 0.25, intensity)*blue +\n        fade(0.0, 0.5, intensity)*cyan +\n        fade(0.25, 0.75, intensity)*green +\n        fade(0.5, 1.0, intensity)*yellow +\n        smoothstep(0.75, 1.0, intensity)*red\n    );\n    return color;\n}';
-		var output = " vec4 alphaFun(vec3 color, float intensity){\n    float alpha = smoothstep(0.0, 1.0, intensity);\n    return vec4(color*alpha, alpha);\n}";
-	
-		var heatmapFragment0 = '#ifdef GL_FRAGMENT_PRECISION_HIGH\n    precision highp int;\n    precision highp float;\n#else\n    precision mediump int;\n    precision mediump float;\n#endif\nvarying vec2 off, dim;\nvarying float vIntensity;\n float linstep(float low, float high, float value){\n    return clamp((value-low)/(high-low), 0.0, 1.0);\n} \n float fade(float low, float high, float value){\n    float mid = (low+high)*0.5;\n    float range = (high-low)*0.5;\n    float x = 1.0 - clamp(abs(mid-value)/range, 0.0, 1.0);\n    return smoothstep(0.0, 1.0, x);\n}\n\n' + getColorFun + "\n" + output +  ' void main(){\n    float falloff = (1.0 - smoothstep(0.0, 1.0, length(off/dim)));\n    float intensity = falloff*vIntensity;\n   gl_FragColor = vec4(intensity);\n}';	
-			
-		var heatmapVertex1 ='attribute vec4 position; varying vec2 texcoord; \nvoid main(){\n  texcoord = position.xy*0.5+0.5;\n highp float y = (-position.y); gl_Position = vec4(position.x, y, position.zw);\n}';
-		var getColorFun1 = 'vec3 getColor(float intensity){\n    vec3 blue = vec3(0.0, 0.0, 1.0);\n    vec3 cyan = vec3(0.0, 1.0, 1.0);\n    vec3 green = vec3(0.0, 1.0, 0.0);\n    vec3 yellow = vec3(1.0, 1.0, 0.0);\n    vec3 red = vec3(1.0, 0.0, 0.0);\n\n    vec3 color = (\n        fade(-0.25, 0.25, intensity)*blue +\n        fade(0.0, 0.5, intensity)*cyan +\n        fade(0.25, 0.75, intensity)*green +\n        fade(0.5, 1.0, intensity)*yellow +\n        smoothstep(0.75, 1.0, intensity)*red\n    );\n    return color;\n}';
-		var output1 = " vec4 alphaFun(vec3 color, float intensity){\n    float alpha = smoothstep(0.0, 1.0, intensity);\n    return vec4(color*alpha, alpha);\n}";
-		var heatmapFragment1 = '#ifdef GL_FRAGMENT_PRECISION_HIGH\n    precision highp int;\n    precision highp float;\n#else\n    precision mediump int;\n    precision mediump float;\n#endif\n uniform sampler2D source; varying vec2 texcoord; \n  float fade(float low, float high, float value){\n    float mid = (low+high)*0.5;\n    float range = (high-low)*0.5;\n  highp float x = 1.0 - clamp(abs(mid-value)/range, 0.0, 1.0);\n    return smoothstep(0.0, 1.0, x);\n}\n\n' + getColorFun1 + "\n" + output1 +  ' \n void main(){\n    vec4 color = texture2D(source, texcoord); \n float intensity = smoothstep(0.0, 1.0, texture2D(source, texcoord).w); \n  \n gl_FragColor = vec4(alphaFun(getColor(intensity), intensity));\n}';
-		*/
-		//return {vertex: vertexSourceCode, fragment: fragmentSourceCode, heatmapVertex0: heatmapVertex0, heatmapFragment0: heatmapFragment0, heatmapVertex1: heatmapVertex1, heatmapFragment1: heatmapFragment1};
 		return {vertex: vertexSourceCode, fragment: fragmentSourceCode};
 	}
 
@@ -101,12 +86,6 @@
 		return shader;
 	}
 
-
-
-
-
-
-	
 
 
 	//Intermediate API
@@ -364,6 +343,7 @@
 			var titletd = document.createElement('td');
 			titletd.colSpan = 2;
 			titletd.style.textAlign= 'center';
+			titletd.style.width = 100;
 			var titletext = document.createTextNode(this.title);
 			titletd.appendChild(titletext);
 			titlerow.appendChild(titletd);
@@ -578,21 +558,7 @@
 
 			this._webgl.gl.linkProgram(this._webgl.program);
 			this._webgl.gl.useProgram(this._webgl.program);
-			/*
-			var heatmapVertex0 = shader(this._webgl.gl.VERTEX_SHADER, source_code.heatmapVertex0, this._webgl);
-			var heatmapFragment0 = shader(this._webgl.gl.FRAGMENT_SHADER, source_code.heatmapFragment0, this._webgl);
 
-			this._webgl.gl.attachShader(this._webgl.heatmapProgram[0], heatmapVertex0);
-			this._webgl.gl.attachShader(this._webgl.heatmapProgram[0], heatmapFragment0);
-			this._webgl.gl.linkProgram(this._webgl.heatmapProgram[0]);
-
-			var heatmapVertex1 = shader(this._webgl.gl.VERTEX_SHADER, source_code.heatmapVertex1, this._webgl);
-			var heatmapFragment1 = shader(this._webgl.gl.FRAGMENT_SHADER, source_code.heatmapFragment1, this._webgl);
-
-			this._webgl.gl.attachShader(this._webgl.heatmapProgram[1], heatmapVertex1);
-			this._webgl.gl.attachShader(this._webgl.heatmapProgram[1], heatmapFragment1);
-			this._webgl.gl.linkProgram(this._webgl.heatmapProgram[1]);
-			*/
 		},
 
 
@@ -824,7 +790,7 @@
 				 		
 				 		
 				 		var triangles_vert = earcut(tempVerts);
-						
+						_tricount +=(triangles_vert.length/3);
 				 		polyarray.push({triangles: triangles_vert, vertex: tempVerts});
 			 	}
 
@@ -855,12 +821,12 @@
 
 						//var temp = earcut.flatten(polygon.geometry.coordinates[i]);
 						//var triangles_vert = earcut(temp.vertices, temp.holes, temp.dimensions);
-						
+						_tricount +=(triangles_vert.length/3);
 				 		polyarray.push({triangles: triangles_vert, vertex: tempVerts});
 				 		//console.log(polyarray);
 				 	}
 
-
+				 	
 			 		return polyarray;
 			 	}
 
@@ -868,169 +834,8 @@
 
 		processData: function(geojson) {
 			
-			
-			
-			console.log("numero de features: ", geojson.features.length);
-
-			var gl = this._webgl.gl;
-			var tempPoints = null;
-			var treepoints = null;
-
-
-			
-
-
-			for(var g = 0; g<geojson.features.length && (this.maxfeatures ==undefined || g<this.maxfeatures); g++)
-			 {
-			 	
-			 	geojson.features[g].properties['_gisplayid'] = g;
-				if(this.minuend != undefined && this.subtrahend != undefined && typeof geojson.features[g].properties[this.minuend] == 'number' && geojson.features[g].properties[this.subtrahend] != undefined && typeof geojson.features[g].properties[this.subtrahend] == 'number' && geojson.features[g].properties[this.subtrahend] != undefined){
-					geojson.features[g].properties[this.attr] = geojson.features[g].properties[this.minuend] - geojson.features[g].properties[this.subtrahend];
-				}			 	
-				var properties = geojson.features[g].properties;
-
-			 	if(geojson.features[g].geometry.type == "Polygon" || geojson.features[g].geometry.type == "MultiPolygon"){
-				 	this.hasPolygons = true;
-				 	var polygons = this.processPolygon(geojson.features[g]);
-				 	
-				 	var currentBorders = [];
-				 	var currentTriangles = [];
-				 	var bufferT = [];
-				 	var bufferB = [];
-
-				 	for(var j = 0; j< polygons.length; j++){
-				 		var trianglespolygon = polygons[j].triangles;
-				 		var border = polygons[j].vertex;
-				 		currentTriangles[j] = new Array();
-				 		currentBorders[j] = new Array();
-				 		
-
-
-
-						for (var h = 0; h < trianglespolygon.length; h++) {
-				 			var pixel = this.latLongToPixelXY(border[trianglespolygon[h]*2], border[trianglespolygon[h]*2+1]);
-				 			currentTriangles[j].push(pixel.x, pixel.y);	
-
-				 			if(h==trianglespolygon.length-1){
-				 				bufferT.push(gl.createBuffer());
-
-								var vertArray = new Float32Array(currentTriangles[j]);
-
-								gl.fsize = vertArray.BYTES_PER_ELEMENT;
-								gl.bindBuffer(gl.ARRAY_BUFFER, bufferT[j]);
-								gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
-
-								bufferT[j].itemSize=2;
-								bufferT[j].numItems=vertArray.length/2;
-				 			}
-				 		}
-
-
-				 		for(var y = 0; y < border.length; y+=2){
-				 			var pixel = this.latLongToPixelXY(border[y], border[y+1]);
-				 			currentBorders[j].push(pixel.x, pixel.y);	
-
-				 			if(y==border.length-2){
-				 				bufferB.push(gl.createBuffer());
-
-								var vertArray = new Float32Array(currentBorders[j]);
-
-								gl.fsize = vertArray.BYTES_PER_ELEMENT;
-								gl.bindBuffer(gl.ARRAY_BUFFER, bufferB[j]);
-								gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
-
-								bufferB[j].itemSize=2;
-								bufferB[j].numItems=vertArray.length/2;
-				 			}
-				 		}
-
-				 	}
-				 	//polygon
-				 	this.insertFeature(g, properties, bufferT, bufferB, []);
-
-				}
-
-				else if(geojson.features[g].geometry.type == "Point" && this.dynamic==true){
-					//dum
-					var currentPoints = []
-					currentPoints[0] = new Array();
-				 	var pixel = this.latLongToPixelXY(geojson.features[g].geometry.coordinates[0], geojson.features[g].geometry.coordinates[1]);
-				 	currentPoints[0].push(pixel.x, pixel.y);	
-				 	var bufferP = [];
-				 	bufferP.push(gl.createBuffer());
-
-					var vertArray = new Float32Array(currentPoints[0]);
-					
-					gl.fsize = vertArray.BYTES_PER_ELEMENT;
-					gl.bindBuffer(gl.ARRAY_BUFFER, bufferP[0]);
-					gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
-
-					bufferP[0].itemSize=2;
-					bufferP[0].numItems=vertArray.length/2;
-
-					this.insertFeature(g, properties, [], [], bufferP);
-
-					if(treepoints==null) treepoints = [];
-					treepoints.push({lon:geojson.features[g].geometry.coordinates[0], lat:geojson.features[g].geometry.coordinates[1], properties:properties});
-
-
-				}
-
-				else if(geojson.features[g].geometry.type == "Point" && this.dynamic==false){
-					//debugger;
-				 	var pixel = this.latLongToPixelXY(geojson.features[g].geometry.coordinates[0], geojson.features[g].geometry.coordinates[1]);
-					if(tempPoints==null){
-						tempPoints = new Array();
-						for(var a=0; a<this.aesthetics.length; a++){
-							tempPoints[a]=[];
-						}
-					}
-
-					var aesarrays = this.fitFeature(properties);
-					for(var y = 0; y<aesarrays.length; y++){
-						tempPoints[aesarrays[y]].push(pixel.x, pixel.y);
-					}
-
-					if(treepoints==null) treepoints = [];
-					treepoints.push({lon:geojson.features[g].geometry.coordinates[0], lat:geojson.features[g].geometry.coordinates[1], properties:properties});
-
-
-				}
-			 
-
-			}//end features loop
-			
-
-			//insert grouped points
-			if(tempPoints!=null){
-				for(var t=0; t<tempPoints.length;t++){
-					if(tempPoints[t].length>0){
-						var bufferP = [];
-					 	bufferP.push(gl.createBuffer());
-
-						var vertArray = new Float32Array(tempPoints[t]);
-						
-						gl.fsize = vertArray.BYTES_PER_ELEMENT;
-						gl.bindBuffer(gl.ARRAY_BUFFER, bufferP[0]);
-						gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
-
-						bufferP[0].itemSize=2;
-						bufferP[0].numItems=vertArray.length/2;
-						this.insertGroupedFeature(t, [],[], bufferP);
-					}
-				}
-				
-			}
-			if(treepoints!=null)
-				this.kdtree = new kdTree(treepoints, function(a, b){
-								  		return Math.pow(a.lon - b.lon, 2) +  Math.pow(a.lat - b.lat, 2);
-									},
-							["lon", "lat", "properties"]);
-			if(this.hasPolygons == true)
-				this.rtree = new PolygonLookup(geojson);
-
+			this.loadGeoJSON(geojson);
 		},
-
 
 		createAndInsertFeature: function(id, geometry, properties){
 			var gl = this._webgl.gl;
@@ -2190,7 +1995,6 @@
 	 ChangeMap.prototype = Object.create(Map.prototype,{
 	 	draw: {
 	 		value: function(){
-	 			var test1 = Date.now();
 				this.clear();
 				for(var i = 0; i<this.aesthetics.length; i++){
 					if(this.aesthetics[i].enabled == true){
@@ -2198,7 +2002,7 @@
 					}
 					this.drawBorders(this.aesthetics[i]);
 				}
-				console.log("test: "+ (Date.now()-test1)/1000);
+				
 			}
 		},
 
@@ -2245,6 +2049,38 @@
 	 });
 
 
+	 function ChorochromaticMap(bgmap, geometry, options){
+		this.aesthetics = new Array();
+		this.geometry = geometry;
+		this.loadOptions(options, bgmap);
+		this.id=mapcount++;
+		this.type='CP';
+		maps.push(this);
+		this.initialize();	
+		return this;
+	 };
+
+	 ChorochromaticMap.prototype = Object.create(Choropleth.prototype,{
+	 	defaults: {
+	 		value: function(defaultid){
+		 		var options = {};
+		 		switch(defaultid){
+		 			case 1:
+						options.colorScheme = ["#440154","#440256","#450457","#450559","#46075a","#46085c","#460a5d","#460b5e","#470d60","#470e61","#471063","#471164","#471365","#481467","#481668","#481769","#48186a","#481a6c","#481b6d","#481c6e","#481d6f","#481f70","#482071","#482173","#482374","#482475","#482576","#482677","#482878","#482979","#472a7a","#472c7a","#472d7b","#472e7c","#472f7d","#46307e","#46327e","#46337f","#463480","#453581","#453781","#453882","#443983","#443a83","#443b84","#433d84","#433e85","#423f85","#424086","#424186","#414287","#414487","#404588","#404688","#3f4788","#3f4889","#3e4989","#3e4a89","#3e4c8a","#3d4d8a","#3d4e8a","#3c4f8a","#3c508b","#3b518b","#3b528b","#3a538b","#3a548c","#39558c","#39568c","#38588c","#38598c","#375a8c","#375b8d","#365c8d","#365d8d","#355e8d","#355f8d","#34608d","#34618d","#33628d","#33638d","#32648e","#32658e","#31668e","#31678e","#31688e","#30698e","#306a8e","#2f6b8e","#2f6c8e","#2e6d8e","#2e6e8e","#2e6f8e","#2d708e","#2d718e","#2c718e","#2c728e","#2c738e","#2b748e","#2b758e","#2a768e","#2a778e","#2a788e","#29798e","#297a8e","#297b8e","#287c8e","#287d8e","#277e8e","#277f8e","#27808e","#26818e","#26828e","#26828e","#25838e","#25848e","#25858e","#24868e","#24878e","#23888e","#23898e","#238a8d","#228b8d","#228c8d","#228d8d","#218e8d","#218f8d","#21908d","#21918c","#20928c","#20928c","#20938c","#1f948c","#1f958b","#1f968b","#1f978b","#1f988b","#1f998a","#1f9a8a","#1e9b8a","#1e9c89","#1e9d89","#1f9e89","#1f9f88","#1fa088","#1fa188","#1fa187","#1fa287","#20a386","#20a486","#21a585","#21a685","#22a785","#22a884","#23a983","#24aa83","#25ab82","#25ac82","#26ad81","#27ad81","#28ae80","#29af7f","#2ab07f","#2cb17e","#2db27d","#2eb37c","#2fb47c","#31b57b","#32b67a","#34b679","#35b779","#37b878","#38b977","#3aba76","#3bbb75","#3dbc74","#3fbc73","#40bd72","#42be71","#44bf70","#46c06f","#48c16e","#4ac16d","#4cc26c","#4ec36b","#50c46a","#52c569","#54c568","#56c667","#58c765","#5ac864","#5cc863","#5ec962","#60ca60","#63cb5f","#65cb5e","#67cc5c","#69cd5b","#6ccd5a","#6ece58","#70cf57","#73d056","#75d054","#77d153","#7ad151","#7cd250","#7fd34e","#81d34d","#84d44b","#86d549","#89d548","#8bd646","#8ed645","#90d743","#93d741","#95d840","#98d83e","#9bd93c","#9dd93b","#a0da39","#a2da37","#a5db36","#a8db34","#aadc32","#addc30","#b0dd2f","#b2dd2d","#b5de2b","#b8de29","#bade28","#bddf26","#c0df25","#c2df23","#c5e021","#c8e020","#cae11f","#cde11d","#d0e11c","#d2e21b","#d5e21a","#d8e219","#dae319","#dde318","#dfe318","#e2e418","#e5e419","#e7e419","#eae51a","#ece51b","#efe51c","#f1e51d","#f4e61e","#f6e620","#f8e621","#fbe723","#fde725"];
+		 				break;
+		 			case 2:
+		 				options.colorScheme = ['purple','orange', 'blue', 'yellow', 'pink', 'green', 'red', 'navy'];
+		 				break;
+		 			default:
+		 				options.colorScheme = ["#440154","#440256","#450457","#450559","#46075a","#46085c","#460a5d","#460b5e","#470d60","#470e61","#471063","#471164","#471365","#481467","#481668","#481769","#48186a","#481a6c","#481b6d","#481c6e","#481d6f","#481f70","#482071","#482173","#482374","#482475","#482576","#482677","#482878","#482979","#472a7a","#472c7a","#472d7b","#472e7c","#472f7d","#46307e","#46327e","#46337f","#463480","#453581","#453781","#453882","#443983","#443a83","#443b84","#433d84","#433e85","#423f85","#424086","#424186","#414287","#414487","#404588","#404688","#3f4788","#3f4889","#3e4989","#3e4a89","#3e4c8a","#3d4d8a","#3d4e8a","#3c4f8a","#3c508b","#3b518b","#3b528b","#3a538b","#3a548c","#39558c","#39568c","#38588c","#38598c","#375a8c","#375b8d","#365c8d","#365d8d","#355e8d","#355f8d","#34608d","#34618d","#33628d","#33638d","#32648e","#32658e","#31668e","#31678e","#31688e","#30698e","#306a8e","#2f6b8e","#2f6c8e","#2e6d8e","#2e6e8e","#2e6f8e","#2d708e","#2d718e","#2c718e","#2c728e","#2c738e","#2b748e","#2b758e","#2a768e","#2a778e","#2a788e","#29798e","#297a8e","#297b8e","#287c8e","#287d8e","#277e8e","#277f8e","#27808e","#26818e","#26828e","#26828e","#25838e","#25848e","#25858e","#24868e","#24878e","#23888e","#23898e","#238a8d","#228b8d","#228c8d","#228d8d","#218e8d","#218f8d","#21908d","#21918c","#20928c","#20928c","#20938c","#1f948c","#1f958b","#1f968b","#1f978b","#1f988b","#1f998a","#1f9a8a","#1e9b8a","#1e9c89","#1e9d89","#1f9e89","#1f9f88","#1fa088","#1fa188","#1fa187","#1fa287","#20a386","#20a486","#21a585","#21a685","#22a785","#22a884","#23a983","#24aa83","#25ab82","#25ac82","#26ad81","#27ad81","#28ae80","#29af7f","#2ab07f","#2cb17e","#2db27d","#2eb37c","#2fb47c","#31b57b","#32b67a","#34b679","#35b779","#37b878","#38b977","#3aba76","#3bbb75","#3dbc74","#3fbc73","#40bd72","#42be71","#44bf70","#46c06f","#48c16e","#4ac16d","#4cc26c","#4ec36b","#50c46a","#52c569","#54c568","#56c667","#58c765","#5ac864","#5cc863","#5ec962","#60ca60","#63cb5f","#65cb5e","#67cc5c","#69cd5b","#6ccd5a","#6ece58","#70cf57","#73d056","#75d054","#77d153","#7ad151","#7cd250","#7fd34e","#81d34d","#84d44b","#86d549","#89d548","#8bd646","#8ed645","#90d743","#93d741","#95d840","#98d83e","#9bd93c","#9dd93b","#a0da39","#a2da37","#a5db36","#a8db34","#aadc32","#addc30","#b0dd2f","#b2dd2d","#b5de2b","#b8de29","#bade28","#bddf26","#c0df25","#c2df23","#c5e021","#c8e020","#cae11f","#cde11d","#d0e11c","#d2e21b","#d5e21a","#d8e219","#dae319","#dde318","#dfe318","#e2e418","#e5e419","#e7e419","#eae51a","#ece51b","#efe51c","#f1e51d","#f4e61e","#f6e620","#f8e621","#fbe723","#fde725"];
+		 				break;
+		 		}
+		 		return options;
+	 		}
+	 	},
+	 });
+
+
 	
 	 function Gisplay(){
 	 	this.profiling = true;
@@ -2253,23 +2089,23 @@
 
 	 Gisplay.prototype = {
 
-	 	makeChoropleth: function(bgmap, geometry, options,defaultid){
+	 	makeChoropleth: function(bgmap, geometry, options){
 	 		if(Gisplay.profiling == true)
 	 			this.startTimeStamp = Date.now();
  			var gismap = new Choropleth(bgmap, geometry, options);
- 			this.makeMap(gismap, defaultid);
+ 			this.makeMap(gismap, options.defaultid);
  			
 	 	},
 
-	 	makeDotMap: function(bgmap, geometry, options,defaultid){
+	 	makeDotMap: function(bgmap, geometry, options){
 	 		if(Gisplay.profiling == true)
 	 			this.startTimeStamp = Date.now();
 	 		var gismap = new DotMap(bgmap, geometry, options);
-	 		this.makeMap(gismap, defaultid);
+	 		this.makeMap(gismap, options.defaultid);
 	 	
 	 	},
 
-	 	makeProportionalSymbolsMap: function(bgmap, geometry, options,defaultid){
+	 	makeProportionalSymbolsMap: function(bgmap, geometry, options){
 	 		if(this.profiling == true)
 	 			this.startTimeStamp = Date.now();
 	 		var gismap = new PSymbolsMap(bgmap, geometry, options);
@@ -2277,13 +2113,20 @@
 	 	
 	 	},
 
-		makeChangeMap: function(bgmap, geometry, options,defaultid){
+		makeChangeMap: function(bgmap, geometry, options){
 	 		if(this.profiling == true)
 	 			this.startTimeStamp = Date.now();
 	 		var gismap = new ChangeMap(bgmap, geometry, options);
-	 		this.makeMap(gismap, defaultid);
+	 		this.makeMap(gismap, options.defaultid);
 	 		
 	 	},
+
+	 	makeChorochromaticMap: function(bgmap, geometry, options){
+	 		if(Gisplay.profiling == true)
+	 			this.startTimeStamp = Date.now();
+ 			var gismap = new ChorochromaticMap(bgmap, geometry, options);
+ 			this.makeMap(gismap, options.defaultid);
+ 		},
 
 	 	makeMap: function(gismap, defaultid){
 	 		setTimeout(function(console){
@@ -2324,10 +2167,6 @@
 		 	},1);
 	 	},
 
-	 
-
-
-
 	 	changemapDefaults: function(defaultid){
 	 		var options = {};
 	 		switch(defaultid){
@@ -2341,56 +2180,6 @@
 	 		}
 	 		return options;
 	 	},
-
-
-	 	makeChorochromaticMap: function(bgmap, geometry, options,defaultid){
-	 		var gismap = new Choropleth(bgmap, geometry, options);
-	 		setTimeout(function(){
-		 		defaultid = defaultid != null ? defaultid: 1;
-		 		
-		 			
-		 		if(gismap.colorscheme==undefined)
-		 			gismap.colorscheme = Gisplay.choroplethDefaults(defaultid).colorScheme;
-		 		
-		 		gismap.preProcessData(geometry, gismap.numberofclasses, gismap.algorithm, gismap.colorscheme);
-
-		 		gismap.processData(geometry);
-		 		gismap.draw();
-		 		if(options.legend != false)
-					gismap.buildLegend();
-
-		 		if(options.loader != false){
-		 			gismap.loader();
-		 		}
-		 	},1);
-	 	},
-
-	 	chorochromaticDefaults: function(defaultid){
-	 		var options = {};
-	 		switch(defaultid){
-	 			case 1:
-	 				//options.colorScheme = ['purple','orange', 'blue', 'yellow', 'pink', 'green', 'red', 'navy'];
-					options.colorScheme = ["#440154","#440256","#450457","#450559","#46075a","#46085c","#460a5d","#460b5e","#470d60","#470e61","#471063","#471164","#471365","#481467","#481668","#481769","#48186a","#481a6c","#481b6d","#481c6e","#481d6f","#481f70","#482071","#482173","#482374","#482475","#482576","#482677","#482878","#482979","#472a7a","#472c7a","#472d7b","#472e7c","#472f7d","#46307e","#46327e","#46337f","#463480","#453581","#453781","#453882","#443983","#443a83","#443b84","#433d84","#433e85","#423f85","#424086","#424186","#414287","#414487","#404588","#404688","#3f4788","#3f4889","#3e4989","#3e4a89","#3e4c8a","#3d4d8a","#3d4e8a","#3c4f8a","#3c508b","#3b518b","#3b528b","#3a538b","#3a548c","#39558c","#39568c","#38588c","#38598c","#375a8c","#375b8d","#365c8d","#365d8d","#355e8d","#355f8d","#34608d","#34618d","#33628d","#33638d","#32648e","#32658e","#31668e","#31678e","#31688e","#30698e","#306a8e","#2f6b8e","#2f6c8e","#2e6d8e","#2e6e8e","#2e6f8e","#2d708e","#2d718e","#2c718e","#2c728e","#2c738e","#2b748e","#2b758e","#2a768e","#2a778e","#2a788e","#29798e","#297a8e","#297b8e","#287c8e","#287d8e","#277e8e","#277f8e","#27808e","#26818e","#26828e","#26828e","#25838e","#25848e","#25858e","#24868e","#24878e","#23888e","#23898e","#238a8d","#228b8d","#228c8d","#228d8d","#218e8d","#218f8d","#21908d","#21918c","#20928c","#20928c","#20938c","#1f948c","#1f958b","#1f968b","#1f978b","#1f988b","#1f998a","#1f9a8a","#1e9b8a","#1e9c89","#1e9d89","#1f9e89","#1f9f88","#1fa088","#1fa188","#1fa187","#1fa287","#20a386","#20a486","#21a585","#21a685","#22a785","#22a884","#23a983","#24aa83","#25ab82","#25ac82","#26ad81","#27ad81","#28ae80","#29af7f","#2ab07f","#2cb17e","#2db27d","#2eb37c","#2fb47c","#31b57b","#32b67a","#34b679","#35b779","#37b878","#38b977","#3aba76","#3bbb75","#3dbc74","#3fbc73","#40bd72","#42be71","#44bf70","#46c06f","#48c16e","#4ac16d","#4cc26c","#4ec36b","#50c46a","#52c569","#54c568","#56c667","#58c765","#5ac864","#5cc863","#5ec962","#60ca60","#63cb5f","#65cb5e","#67cc5c","#69cd5b","#6ccd5a","#6ece58","#70cf57","#73d056","#75d054","#77d153","#7ad151","#7cd250","#7fd34e","#81d34d","#84d44b","#86d549","#89d548","#8bd646","#8ed645","#90d743","#93d741","#95d840","#98d83e","#9bd93c","#9dd93b","#a0da39","#a2da37","#a5db36","#a8db34","#aadc32","#addc30","#b0dd2f","#b2dd2d","#b5de2b","#b8de29","#bade28","#bddf26","#c0df25","#c2df23","#c5e021","#c8e020","#cae11f","#cde11d","#d0e11c","#d2e21b","#d5e21a","#d8e219","#dae319","#dde318","#dfe318","#e2e418","#e5e419","#e7e419","#eae51a","#ece51b","#efe51c","#f1e51d","#f4e61e","#f6e620","#f8e621","#fbe723","#fde725"];
-	 				break;
-	 			
-	 			default:
-	 				
-	 				break;
-	 		}
-	 		return options;
-	 	},
-
-
-
-
-	 
-	 	
-
-	 	validateOptions: function(maptype, options){
-
-	 	}
-
-
 	 };
 
 	 //init Gisplay API
