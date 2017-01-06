@@ -33,26 +33,13 @@
 	
 	L.mapbox.accessToken = 'pk.eyJ1IjoibG9sYXNkIiwiYSI6ImNpbmxsZDJkejAwOHR2Zm0yZHVwOWV1ejEifQ.SJ6CupBlW0gPic0n-HgY6w';
 	var map = L.mapbox.map('map', 'mapbox.streets').setView([49.36855556, -81.66371667], 4);
-
 	var options = {
-		colorScheme: ["red", "blue"]
-		//,numberOfClasses: 5
-		//,classBreaksMethod: "quantile"
-		,classBreaks: [0,170,370,760,10760]
-		
-		,customMapService: false,
-		maxPointSize: 100
-		,minPointSize: 1
-		,sizeByClass: true
+		colorScheme: ["white", "yellow", "orange", "red"]
+		,numberOfClasses: 4
 		,attr: 'f3'
-		,dynamic: false
 		,legendTitle: 'Fatals'
-		//,interactive: true
-		//,showPropertiesOnClick: ['f1', "State", 'f2', 'County'] //choropleth file
-		//,showPropertiesOnClick: ['f1', "Alcohol", 'f2', 'Victims'] //dot map file
-		,maxFeatures: 5000
 	};
-
+	//Gisplay.makeChoropleth(map, data ,options);
 
 
 	
@@ -96,7 +83,7 @@
 			maps[0].buildLegend();
 			maps[0].loader();
 */			
-			Gisplay.makeChoropleth(map, data ,options,null);
+			Gisplay.makeChoropleth(map, data ,options);
 			console.log("tempo gisplay: " + (Date.now()-datareadtimestamp)/1000 + " segundos");
 			console.log("tempo total: " + (Date.now()-time)/1000 + " segundos");
 

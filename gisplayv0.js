@@ -1944,12 +1944,13 @@
 			value: function(){
 				this.legend = new Legend(this.id, this.legendTitle);
 				if(this.aesthetics.length==1)
-					this.legend.insertProportionalSymbols(this.aesthetics[0],this.numberOfLegendItems);
-				for(var i = this.aesthetics.length-1; i>=0; i--)
-					if(i==0)
-						this.legend.insertProportionalSymbols(this.aesthetics[i],this,2);
-					else
-						this.legend.insertProportionalSymbols(this.aesthetics[i],this,1);
+					this.legend.insertProportionalSymbols(this.aesthetics[0],this,this.numberOfLegendItems);
+				else
+					for(var i = this.aesthetics.length-1; i>=0; i--)
+						if(i==0)
+							this.legend.insertProportionalSymbols(this.aesthetics[i],this,2);
+						else
+							this.legend.insertProportionalSymbols(this.aesthetics[i],this,1);
 				this.legend.insertLegend(this.map);
 				/*for(var a in this.aesthetics){
 					this.legend.insertPointRow(this.aesthetics[a], this);
